@@ -31,7 +31,7 @@ public class TRACER : IChessBot
         {
             //for every move -> make move virtually and evaluate how good it is
             board.MakeMove(currentMove);
-            moveScore = findMove.NegaMaxAB(board, DEPTH, int.MinValue, int.MaxValue, board.IsWhiteToMove);
+            moveScore = findMove.NegaMaxAB(board, DEPTH + 1, int.MinValue, int.MaxValue);
             board.UndoMove(currentMove);
 
             //if the score of this move is better than the current best -> switch

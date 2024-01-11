@@ -13,18 +13,15 @@ namespace Chess_Challenge.src.TRACER
         //used Classes
         Evaluation eval = new Evaluation();
 
-        //NegaMax AlphaBeta Pruning Algorith -> returns a high value for the current play (regardless of colour)
-        public int NegaMaxAB(Board board, int depth, int alpha, int beta, bool maximizingPlayer)
+        //NegaMax AlphaBeta Pruning Algorith -> returns a high value for the current player (regardless of colour)
+        public int NegaMaxAB(Board board, int depth, int alpha, int beta)
         {
-            //Variables
-            int moveScore; //score of the current move
-
             //if depth is reached then evaluate position
             if (depth == 0)
-                return eval.EvaluatePosition(board);// * (maximizingPlayer ? 1 : -1);
+                return eval.EvaluatePosition(board) * (board.IsWhiteToMove ? 1 : -1);
             //if player is checkmated return corresponding value
             if (board.IsInCheckmate())
-                return board.IsWhiteToMove ? int.MinValue : int.MaxValue;
+                return -999999;
             //if game is a draw return equal
             if (board.IsDraw())
                 return 0;
@@ -36,19 +33,15 @@ namespace Chess_Challenge.src.TRACER
             foreach (var move in moves)
             {
                 board.MakeMove(move);
-                int value = -NegaMaxAB(board, depth - 1, -beta, -alpha, !maximizingPlayer);
+                int value = -NegaMaxAB(board, depth - 1, -beta, -alpha);
                 board.UndoMove(move);
 
                 alpha = Math.Max(alpha, value);
 
                 if (alpha >= beta)
-                {
                     break; // Beta-Cut-off
-                }
             }
-
             return alpha;
-
         }
     }
 }
