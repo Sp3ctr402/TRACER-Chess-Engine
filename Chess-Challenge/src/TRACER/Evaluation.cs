@@ -25,16 +25,18 @@ namespace Chess_Challenge.src.TRACER
         //Endgame detection -> gets near 1 if less figures are on the board
         private static int Egd(Board board)
         {
-            return 1 - BitOperations.PopCount(board.AllPiecesBitboard)/32;
+            return 1 - Mgd(board);
         }
 
-        //Get the value of a single piece regarding all parameters .TODO
-        private int GetFigureScore(Board board, int squareIndex, Piece piece)
+        //Get the value of a single piece regarding all parameters 
+        public int GetFigureScore(Board board, int squareIndex, Piece piece)
         {
-            int figureScore = 0;
-            int[] mgTable = mgPawnTableW;
-            int[] egTable = egPawnTableW;
-
+            
+            int figureScore = 0;    //the Value the piece has on the given square
+            int[] mgTable = mgPawnTableW;   //PiecesquareTable to use for midgame
+            int[] egTable = egPawnTableW;   //PiecesquareTable to use for endgame
+                
+            //Figure out which PieceSquare MidGame and EndGame Table to use
             switch (piece.PieceType) 
             {
                 case PieceType.None:
@@ -67,20 +69,25 @@ namespace Chess_Challenge.src.TRACER
                 default:
                     break;
             }
+            //Add the Value of the Piece in the given Stage
             figureScore += Mgd(board) * mgPieceValues[(int)piece.PieceType] + Egd(board) * egPieceValues[(int)piece.PieceType];
+            //Add the value of the square for the given piece to its value
             figureScore += Mgd(board) * mgTable[squareIndex] + Egd(board) * egTable[squareIndex];
 
+            //return final value for the piece
             return figureScore;
         }
 
         public int EvaluatePosition(Board board)
         {
-            int whiteMaterial = 0;
-            int blackMaterial = 0;
-            int squareIndex;
+            int whiteMaterial = 0;  //Value of white Material
+            int blackMaterial = 0;  //Value of black Material
+            int squareIndex;    //Square index (0-63) of the piece
 
-            ulong pieces = board.AllPiecesBitboard;
+            ulong pieces = board.AllPiecesBitboard; //bitboard where each square containing a piece is turned to 1
 
+            //As long as there a pieces on the board (var pieces is unequal to zero) get the Index of that
+            //square and calculate the pieces value and add it to its color Material
             while (pieces != 0)
             {
                 Piece piece = board.GetPiece(new(squareIndex = BitboardHelper.ClearAndGetIndexOfLSB(ref pieces)));
@@ -90,7 +97,7 @@ namespace Chess_Challenge.src.TRACER
                     blackMaterial += GetFigureScore(board, squareIndex, piece);
             }
 
-
+            //return MAterial balance
             return whiteMaterial - blackMaterial;
         }
 
