@@ -20,7 +20,8 @@ namespace ChessChallenge.Application
             Human,
             EvilBot,
             TRACER,
-            TRACER_V1
+            TRACER_V1,
+            TRACER_V2,
         }
 
         // Game state
@@ -94,6 +95,25 @@ namespace ChessChallenge.Application
             bool isGameWithHuman = whiteType is PlayerType.Human || blackType is PlayerType.Human;
             int fenIndex = isGameWithHuman ? 0 : botMatchGameIndex / 2;
             board.LoadPosition(botMatchStartFens[fenIndex]);
+            //
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            //
 
             // Player Setup
             PlayerWhite = CreatePlayer(whiteType);
@@ -208,7 +228,8 @@ namespace ChessChallenge.Application
             {
                 PlayerType.EvilBot => new ChessPlayer(new EvilBot(), type, GameDurationMilliseconds),
                 PlayerType.TRACER => new ChessPlayer(new TRACER(), type, GameDurationMilliseconds),
-                //PlayerType.TRACER_V1 => new ChessPlayer(new TRACER_V1(), type, GameDurationMilliseconds),
+                PlayerType.TRACER_V1 => new ChessPlayer(new TRACER_V1(), type, GameDurationMilliseconds),
+                PlayerType.TRACER_V2 => new ChessPlayer(new TRACER_V2(), type, GameDurationMilliseconds),
                 _ => new ChessPlayer(new HumanPlayer(boardUI), type)
             };
         }

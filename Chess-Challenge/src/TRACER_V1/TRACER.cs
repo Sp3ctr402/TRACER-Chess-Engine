@@ -7,10 +7,8 @@ using System;
 using System.Windows;
 
 //TRACER_V1 NegaMax(+) | AlphaBeta(+) | Material Balance(+)
-//TRACER_V2 PieceSquareTable (+) | Endgame Transition (+)               +/- 0 Elo
-//TRACER_V3 QSearch(-) | MoveOrdering(-) | Depth increase(-)            
 
-public class TRACER : IChessBot
+public class TRACER_V1 : IChessBot
 {
     //Constant Variables
     private const int DEPTH = 4; //Search depth

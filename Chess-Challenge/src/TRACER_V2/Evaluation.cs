@@ -8,7 +8,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Chess_Challenge.src.TRACER
+namespace Chess_Challenge.src.TRACER_V2
 {
     internal class Evaluation
     {
