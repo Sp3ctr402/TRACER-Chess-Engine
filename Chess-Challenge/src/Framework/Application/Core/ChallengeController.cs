@@ -15,6 +15,7 @@ namespace ChessChallenge.Application
 {
     public class ChallengeController
     {
+
         public enum PlayerType
         {
             Human,
@@ -22,6 +23,8 @@ namespace ChessChallenge.Application
             TRACER,
             TRACER_V1,
             TRACER_V2,
+            TRACER_V3,
+            TRACER_V4
         }
 
         // Game state
@@ -230,7 +233,20 @@ namespace ChessChallenge.Application
                 PlayerType.TRACER => new ChessPlayer(new TRACER(), type, GameDurationMilliseconds),
                 PlayerType.TRACER_V1 => new ChessPlayer(new TRACER_V1(), type, GameDurationMilliseconds),
                 PlayerType.TRACER_V2 => new ChessPlayer(new TRACER_V2(), type, GameDurationMilliseconds),
+                PlayerType.TRACER_V3 => new ChessPlayer(new TRACER_V3(), type, GameDurationMilliseconds),
+                PlayerType.TRACER_V4 => new ChessPlayer(new TRACER_V4(), type, GameDurationMilliseconds),
                 _ => new ChessPlayer(new HumanPlayer(boardUI), type)
+            };
+        }
+
+        public static ChessChallenge.API.IChessBot? CreateBot(PlayerType type)
+        {
+            return type switch
+            {
+                PlayerType.TRACER => new TRACER(),
+                PlayerType.EvilBot => new EvilBot(),
+                // If you have other bot types, you can add them here as well
+                _ => null
             };
         }
 

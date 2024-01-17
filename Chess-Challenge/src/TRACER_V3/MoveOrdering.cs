@@ -5,21 +5,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Chess_Challenge.src.TRACER
+namespace Chess_Challenge.src.TRACER_V3
 {
     internal class MoveOrdering
     {
         //Classes used
         Evaluation eval = new Evaluation();
-
-        //Global variables
-        private Move prevIterationBestMove;
-        private static readonly int[] PieceValues = { 0, 94, 281, 297, 512, 936, 100000 };
-
-        public void SetPrevIterationBestMove(Move move)
-        {
-            prevIterationBestMove = move;
-        }
 
         //Order Moves based on evaluation
         public void OrderMoves(Move[] moves, Board board)
@@ -43,13 +34,7 @@ namespace Chess_Challenge.src.TRACER
             Piece movedPiece = board.GetPiece(startSquare); //moved Piece
             Piece targetPiece = board.GetPiece(startSquare); //target Piece
 
-            //If its the best move from pevius iteration it needs to be sorted first
-            if (move == prevIterationBestMove)
-                moveScoreGuess += 1000;
-
-            //If move is already stored in TTable then look at it first du get cutoffs quicker TODO
-
-            //Winning captures are good
+            //Moves capturing high value pieces with low value pieces are usually good
             if (move.CapturePieceType != 0)
                 moveScoreGuess +=
                     10 * eval.GetFigureScore(board, targetSquare.Index, targetPiece) //Score of the targetted piece
@@ -57,7 +42,9 @@ namespace Chess_Challenge.src.TRACER
 
             //Promoting Pawns is usually a good idea
             if (move.IsPromotion)
-                moveScoreGuess += PieceValues[(int)move.PromotionPieceType];
+                moveScoreGuess +=
+                    //score of a queen which the Engine will promote to
+                    eval.GetFigureScore(board, targetSquare.Index, new Piece(PieceType.Queen, board.IsWhiteToMove, targetSquare));
 
             //Putting figures into the attack of opposite pawns is usually bad
             if (board.SquareIsAttackedByOpponentPawn(targetSquare))

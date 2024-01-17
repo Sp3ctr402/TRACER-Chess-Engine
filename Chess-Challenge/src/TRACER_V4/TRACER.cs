@@ -7,9 +7,12 @@ using System;
 using System.Windows;
 using System.Runtime.InteropServices;
 
+//TRACER_V1 NegaMax(+) | AlphaBeta(+) | Material Balance(+)
+//TRACER_V2 PieceSquareTable(+) | Endgame Transition(+)                     +/- 0 Elo
+//TRACER_V3 QSearch(+) | DeltaPruning(+) | MoveOrdering(+)                  +250 +/- 35 Elo   
+//TRACER_V4 Iterative Deepening(+) | MoveOrdering improvements(+)           +231 +/- 36 Elo | Lichess implemented (+) 
 
-
-public class TRACER : IChessBot
+public class TRACER_V4 : IChessBot
 {
     //Constant Variables
     private int MAX_DEPTH = 5; //Max Search depth
@@ -22,13 +25,6 @@ public class TRACER : IChessBot
     private int currentDepth; //Depth we are currently searching 
     private int timeForTurn; //Time the engine has to make a turn
 
-    //------------------------- #DEBUG -------------------------
-    private int nodesSearched;
-    private int qnodesSearched;
-    private int deltaPruned;
-    private int alphaBetaPruned;
-    //------------------------- #DEBUGEND ----------------------
-
 
     //Used Classes
     Evaluation eval = new Evaluation();
@@ -36,13 +32,6 @@ public class TRACER : IChessBot
 
     public Move Think(Board board, Timer timer)
     {
-        //------------------------- #DEBUG -------------------------
-        nodesSearched = 0; //Reset the numbers of nodes Searched
-        qnodesSearched = 0; //Reset the numbers of nodes Searched
-        deltaPruned = 0; //Reset delta pruned
-        alphaBetaPruned = 0; //Reset alphaBetaPruned
-        Console.WriteLine("-----------------------------------------------------------------");
-        //------------------------- #DEBUGEND ----------------------
 
         bestMove = Move.NullMove; //Reset bestMove at start of think method
         bestMovePrevIteration = Move.NullMove; //Reset bestMove previous Iteration 
@@ -55,11 +44,6 @@ public class TRACER : IChessBot
         for (currentDepth = 1; currentDepth <= MAX_DEPTH; currentDepth++)
         {
             Search(board, currentDepth, -MATE, MATE, 0);
-
-            //------------------------- #DEBUG -------------------------  
-            Console.WriteLine("NoPS/QSP: {0}/{2} | AB-Pruned:{5} | DeltaPruned: {3} | Eval: {1} | Depth: {4}"
-                , nodesSearched, eval.EvaluatePosition(board), qnodesSearched, deltaPruned, currentDepth, alphaBetaPruned);
-            //------------------------- #DEBUGEND ----------------------
             //Set bestMove from previous Iteration
             bestMovePrevIteration = bestMove;
 
@@ -70,18 +54,11 @@ public class TRACER : IChessBot
                 break;
             }
         }
-        //------------------------- #DEBUG -------------------------
-        Console.WriteLine("-----------------------------------------------------------------");
-        //------------------------- #DEBUGEND ----------------------
         return bestMove;
     }
 
     private int Search(Board board, int depth, int alpha, int beta, int ply)
     {
-        //------------------------- #DEBUG -------------------------
-        nodesSearched++;
-        //------------------------- #DEBUGEND ----------------------
-
         //when root is reached evaluate the position
         //relative score -> if white is winning and its blacks turn Evaluation should return a negative score
         //since my Evaluation returns the score from a watchers perspective we need to multiply evaluation by whos turn it is
@@ -120,9 +97,6 @@ public class TRACER : IChessBot
             //AlphaBeta Pruning
             if (alpha >= beta)
             {
-                //------------------------- #DEBUG -------------------------
-                alphaBetaPruned++;
-                //------------------------- #DEBUGEND ----------------------
                 return beta;
             }
         }
@@ -130,11 +104,6 @@ public class TRACER : IChessBot
     }
     private int QSearch(Board board, int alpha, int beta, int ply)
     {
-        //------------------------- #DEBUG -------------------------
-        nodesSearched++;
-        qnodesSearched++;
-        //------------------------- #DEBUGEND ----------------------
-
         //Evaluate the position
         int standPat = eval.EvaluatePosition(board) * (board.IsWhiteToMove ? 1 : -1);
 
@@ -151,9 +120,6 @@ public class TRACER : IChessBot
         const int BIG_DELTA = 500; //High value near Queen
         if (standPat < alpha - BIG_DELTA)
         {
-            //------------------------- #DEBUG -------------------------
-            deltaPruned++;
-            //------------------------- #DEBUGEND ----------------------
             return alpha;
         }
 
