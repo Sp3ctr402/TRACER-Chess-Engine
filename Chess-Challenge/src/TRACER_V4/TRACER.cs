@@ -50,7 +50,6 @@ public class TRACER_V4 : IChessBot
             //Check if time for turn is up
             if (timer.MillisecondsElapsedThisTurn > timeForTurn)
             {
-                Console.WriteLine("times up");
                 break;
             }
         }

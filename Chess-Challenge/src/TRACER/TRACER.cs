@@ -7,8 +7,6 @@ using System;
 using System.Windows;
 using System.Runtime.InteropServices;
 
-
-
 public class TRACER : IChessBot
 {
     //Constant Variables
