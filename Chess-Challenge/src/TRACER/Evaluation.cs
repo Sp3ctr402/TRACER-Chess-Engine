@@ -200,6 +200,7 @@ namespace Chess_Challenge.src.TRACER
             //passed Pawn calculation -> if the pawn is a passed pawn, give bonus depending on the rank he is on
             if (passedPawnDetection(board, new Square(squareIndex), isWhite) == true)
             {
+                pawnBonus += 10 * midGame + 15 * endGame
                 if (isWhite)
                 {
                     if (new Square(squareIndex).Rank == 4)
@@ -220,19 +221,39 @@ namespace Chess_Challenge.src.TRACER
             return pawnBonus;
         }
 
-        //Detect if the looked at pawn is a passed pawn (no enemy pawns on )
+        //Detect if the looked at pawn is a passed pawn (no enemy pawns on)
         private bool passedPawnDetection(Board board, Square square, bool isWhite)
         {
             bool isPassed = false;  //bool thats getting returned
             ulong enemyPawns = board.GetPieceBitboard(PieceType.Pawn, !isWhite);    //Bitboard of enemy pawns
             ulong passedFiles = 0;  //Bitboard of adjacent Files (if pawn on b file: a,b and c files are set to 1)
+            ulong fileMask = 0x0101010101010101; //Mask of a single file - to help create passed Files
             ulong passedRanks = 0;  //Bitboard of every rank (greater if white, lower if black) then figure rank is set to 1
             ulong passedMask;   //Bitboard to detect if the pawn is a passed pawn
 
+            //The plan:
+            //Make a passed Files Bitboard where each bit is set to one across the whole board, that is the same or adjacent file like the looked at pawn
+            //eg wPawn on File C -> complete B,C and D Files are set to 1
+            //Make a passed Ranks Bitboard where each complete Rank till 6 or 1 (board goes 0-7) ahead of the looked at Pawn is set to 1
+            //eg wPawn on 5th Rank -> Rank 6 and 7 (5 and 6) will bet set to on
+            //Combine these Bitboards via "&" to get a passedMask Bitboard which we can again "&"-Combine with the Bitboard of enemy pawns
+            //to see if it is passed
 
+            passedFiles = fileMask << Max(0, square.File - 1) | fileMask << square.File | fileMask Min(7, square.File + 1);
+            BitboardHelper.VisualizeBitboard(passedFiles);
+
+            if(isWhite)
+            {
+                passedRanks = ulong.MaxValue << 8 * (square.Rank + 1);
+            }
+            else
+            {
+                passedRanks = ulong.MaxValue >> 8 * (square.Rank - 1);
+            }
 
             passedMask = passedFiles & passedRanks;
 
+            //If the "&"-Combination of the passedMask and enemyPawns Bitboard returns zero -> it is a passed pawn
             if((enemyPawns & passedMask) == 0)
                 isPassed = true;
 
@@ -418,6 +439,8 @@ namespace Chess_Challenge.src.TRACER
         };
         private static readonly int[] egKingTableB = egKingTableW.Reverse().ToArray();
         #endregion
+
     }
+
 }
 
