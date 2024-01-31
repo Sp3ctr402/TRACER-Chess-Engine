@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -17,16 +16,15 @@ namespace Chess_Challenge.src.TRACER
         private static readonly int[] mgPieceValues = { 0,  82, 337, 365, 477, 1025, 100000};
         private static readonly int[] egPieceValues = { 0,  94, 281, 297, 512,  936, 100000};
 
-        //Center Bitboard
-        public ulong centerBitboard = ((ulong)1 << 27) | ((ulong)1 << 28) | ((ulong)1 << 35) | ((ulong)1 << 36);
-
         //Midgame detection -> is 1 when all pieces are on the board
-        private static int Mgd(Board board)
+        //Midgame detection -> is 1 when all pieces are on the board
+        private static double Mgd(Board board)
         {
-            return BitOperations.PopCount(board.AllPiecesBitboard)/32;
+            double popCount = BitboardHelper.GetNumberOfSetBits(board.AllPiecesBitboard);
+            return popCount / 32.0;
         }
         //Endgame detection -> gets near 1 if less figures are on the board
-        private static int Egd(Board board)
+        private static double Egd(Board board)
         {
             return 1 - Mgd(board);
         }
@@ -38,11 +36,12 @@ namespace Chess_Challenge.src.TRACER
             int figureScore = 0;    //the Value the piece has on the given square
             int[] mgTable = mgPawnTableW;   //PiecesquareTable to use for midgame
             int[] egTable = egPawnTableW;   //PiecesquareTable to use for endgame
-            int midGame = Mgd(board); //MidGame Value, to just calc once
-            int endGame = Egd(board); //EndGame Value, to just calc once
+            double midGame = Mgd(board); //MidGame Value, to just calc once
+            double endGame = Egd(board); //EndGame Value, to just calc once
+
 
             //Figure out which PieceSquare MidGame and EndGame Table to use
-            switch (piece.PieceType) 
+            switch (piece.PieceType)
             {
                 case PieceType.None:
                     figureScore = 0;
@@ -75,11 +74,9 @@ namespace Chess_Challenge.src.TRACER
                     break;
             }
             //Add the Value of the Piece in the given Stage
-            figureScore += midGame * mgPieceValues[(int)piece.PieceType] + endGame * egPieceValues[(int)piece.PieceType];
+            figureScore += (int)(midGame * mgPieceValues[(int)piece.PieceType] + endGame * egPieceValues[(int)piece.PieceType]);
             //Add the value of the square for the given piece to its value
-            figureScore += midGame * mgTable[squareIndex] + endGame * egTable[squareIndex];
-            //Add a factor to the piece value depending on its usage
-            figureScore += FigureBonus(board, squareIndex, piece.IsWhite, piece.PieceType);
+            figureScore += (int)(midGame * mgTable[squareIndex] + endGame * egTable[squareIndex]);
 
             //return final value for the piece
             return figureScore;
@@ -104,194 +101,10 @@ namespace Chess_Challenge.src.TRACER
                     blackMaterial += GetFigureScore(board, squareIndex, piece);
             }
 
-            //return MAterial balance
+            //return Material balance
             return whiteMaterial - blackMaterial;
         }
-
-        //Depending on pieceType calculate a factor for the value of the piece depending on its use
-        private int FigureBonus(Board board, int squareIndex, bool isWhite, PieceType pieceType)
-        {
-            int figureScore = 0;
-
-            switch (pieceType)
-            {
-                case PieceType.None:
-                    break;
-                case PieceType.Pawn:
-                    figureScore = PawnBonus(board, squareIndex, isWhite);
-                    break;
-                case PieceType.Knight:
-                    figureScore = KnightBonus(board, squareIndex, isWhite);
-                    break;
-                case PieceType.Bishop:
-                    figureScore = BishopBonus(board, squareIndex, isWhite);
-                    break;
-                case PieceType.Rook:
-                    figureScore = RookBonus(board, squareIndex, isWhite);
-                    break;
-                case PieceType.Queen:
-                    figureScore = QueenBonus(board, squareIndex, isWhite);
-                    break;
-                case PieceType.King:
-                    figureScore = KingBonus(board, squareIndex, isWhite);
-                    break;
-                default:
-                    break;
-            }
-            return figureScore;
-        }
-
-        #region FigureBonus Calculation
-        //Calculate PawnBonus depending on
-        //-Pawn Structure
-        //-passed Pawns
-        //-Pawn Center
-        private int PawnBonus(Board board, int squareIndex, bool isWhite)
-        {
-            //Variables
-            int pawnBonus = 1;          //Bonus the pawn gets
-            int midGame = Mgd(board);   //MidGame detection to just calc one time 
-            int endGame = Egd(board);   //EndGame detection to just calc one time 
-
-            ulong PawnsBB = isWhite ? board.GetPieceBitboard(PieceType.Pawn, true) : board.GetPieceBitboard(PieceType.Pawn, false); //Bitboard of all pawns of corresponding colour
-            ulong PawnATT = BitboardHelper.GetPawnAttacks(new Square(squareIndex), isWhite); //Bitboard of the specific pawn attacks
-            ulong centerMask = ((ulong)1 << 27) | ((ulong)1 << 28) | ((ulong)1 << 35) | ((ulong)1 << 36); //Bitboard where center square are set to 1
-
-            //Pawn structure calculation -> give Bonus when pawn is protected by another pawn
-            if (isWhite)
-            {
-                if ((squareIndex - 9 >= 0) && BitboardHelper.SquareIsSet(PawnsBB, new Square(squareIndex - 9)))
-                    pawnBonus += 12 * midGame + 14 * endGame;
-                if ((squareIndex - 7 >= 0) && BitboardHelper.SquareIsSet(PawnsBB, new Square(squareIndex - 7)))
-                    pawnBonus += 12 * midGame + 14 * endGame;
-            }
-            else 
-            {
-                if ((squareIndex + 9 <= 63) && BitboardHelper.SquareIsSet(PawnsBB, new Square(squareIndex + 9)))
-                    pawnBonus += 12 * midGame + 14 * endGame;
-                if ((squareIndex + 7 <= 63) && BitboardHelper.SquareIsSet(PawnsBB, new Square(squareIndex + 7)))
-                    pawnBonus += 12 * midGame + 14 * endGame;
-            }
-
-            //Center Bonus Calculation -> give Bonus when being in the center and minor Bonus when attacking the Center (27,28,35,36)
-            if (isWhite)
-            {
-                //reward being in own center
-                if (squareIndex == 27 || squareIndex == 28)
-                    pawnBonus += 10 * midGame + 7 * endGame;
-                //reward being in enemy center
-                if (squareIndex == 35 || squareIndex == 36)
-                    pawnBonus += 12 * midGame + 9 * endGame;
-            }
-            else 
-            {
-                //reward being in own center
-                if (squareIndex == 35 || squareIndex == 36)
-                    pawnBonus += 10 * midGame + 7 * endGame;
-                //reward being in enemy center
-                if (squareIndex == 27 || squareIndex == 28)
-                    pawnBonus += 12 * midGame + 9 * endGame;
-            }
-            //If pawnATT and centerMask Bitboard are AND-entangled and != 0, the pawn attacks a center square and gets the bonus
-            //a pawn can only attack one center square simultaneously
-            if((PawnATT & centerMask) != 0)
-                pawnBonus += 5 * midGame + 3 * endGame;
-
-            //passed Pawn calculation -> if the pawn is a passed pawn, give bonus depending on the rank he is on
-            if (passedPawnDetection(board, new Square(squareIndex), isWhite) == true)
-            {
-                pawnBonus += 10 * midGame + 15 * endGame
-                if (isWhite)
-                {
-                    if (new Square(squareIndex).Rank == 4)
-                        pawnBonus += 25;
-                    if (new Square(squareIndex).Rank == 5)
-                        pawnBonus += 45;
-                }
-                else
-                {
-                    if (new Square(squareIndex).Rank == 5)
-                        pawnBonus += 25;
-                    if (new Square(squareIndex).Rank == 4)
-                        pawnBonus += 45;
-                }
-
-            }
-
-            return pawnBonus;
-        }
-
-        //Detect if the looked at pawn is a passed pawn (no enemy pawns on)
-        private bool passedPawnDetection(Board board, Square square, bool isWhite)
-        {
-            bool isPassed = false;  //bool thats getting returned
-            ulong enemyPawns = board.GetPieceBitboard(PieceType.Pawn, !isWhite);    //Bitboard of enemy pawns
-            ulong passedFiles = 0;  //Bitboard of adjacent Files (if pawn on b file: a,b and c files are set to 1)
-            ulong fileMask = 0x0101010101010101; //Mask of a single file - to help create passed Files
-            ulong passedRanks = 0;  //Bitboard of every rank (greater if white, lower if black) then figure rank is set to 1
-            ulong passedMask;   //Bitboard to detect if the pawn is a passed pawn
-
-            //The plan:
-            //Make a passed Files Bitboard where each bit is set to one across the whole board, that is the same or adjacent file like the looked at pawn
-            //eg wPawn on File C -> complete B,C and D Files are set to 1
-            //Make a passed Ranks Bitboard where each complete Rank till 6 or 1 (board goes 0-7) ahead of the looked at Pawn is set to 1
-            //eg wPawn on 5th Rank -> Rank 6 and 7 (5 and 6) will bet set to on
-            //Combine these Bitboards via "&" to get a passedMask Bitboard which we can again "&"-Combine with the Bitboard of enemy pawns
-            //to see if it is passed
-
-            passedFiles = fileMask << Max(0, square.File - 1) | fileMask << square.File | fileMask Min(7, square.File + 1);
-            BitboardHelper.VisualizeBitboard(passedFiles);
-
-            if(isWhite)
-            {
-                passedRanks = ulong.MaxValue << 8 * (square.Rank + 1);
-            }
-            else
-            {
-                passedRanks = ulong.MaxValue >> 8 * (square.Rank - 1);
-            }
-
-            passedMask = passedFiles & passedRanks;
-
-            //If the "&"-Combination of the passedMask and enemyPawns Bitboard returns zero -> it is a passed pawn
-            if((enemyPawns & passedMask) == 0)
-                isPassed = true;
-
-            return isPassed;
-        }
-
-        private int KnightBonus(Board board, int squareIndex, bool isWhite)
-        {
-            int knightFactor = 1;
-
-            return knightFactor;
-        }
-        private int BishopBonus(Board board, int squareIndex, bool isWhite)
-        {
-            int bishopFactor = 1;
-
-            return bishopFactor;
-        }
-        private int RookBonus(Board board, int squareIndex, bool isWhite)
-        {
-            int rookFactor = 1;
-
-            return rookFactor;
-        }
-        private int QueenBonus(Board board, int squareIndex, bool isWhite)
-        {
-            int queenFactor = 1;
-
-            return queenFactor;
-        }
-        private int KingBonus(Board board, int squareIndex, bool isWhite)
-        {
-            int kingFactor = 1;
-
-            return kingFactor;
-        }
-        #endregion
-
+    
         #region PieceSqaureTables - PESTOS Evaluation
         //Index 0-7 are squares a1 - h1, 8-15 a2-h2 etc
         private static readonly int[] mgPawnTableW =
@@ -439,8 +252,6 @@ namespace Chess_Challenge.src.TRACER
         };
         private static readonly int[] egKingTableB = egKingTableW.Reverse().ToArray();
         #endregion
-
     }
-
 }
 
