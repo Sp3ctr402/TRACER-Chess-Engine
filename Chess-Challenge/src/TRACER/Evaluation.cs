@@ -17,7 +17,6 @@ namespace Chess_Challenge.src.TRACER
         private static readonly int[] egPieceValues = { 0,  94, 281, 297, 512,  936, 100000};
 
         //Midgame detection -> is 1 when all pieces are on the board
-        //Midgame detection -> is 1 when all pieces are on the board
         private static double Mgd(Board board)
         {
             double popCount = BitboardHelper.GetNumberOfSetBits(board.AllPiecesBitboard);

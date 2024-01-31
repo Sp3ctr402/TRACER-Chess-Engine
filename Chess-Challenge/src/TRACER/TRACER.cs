@@ -50,7 +50,7 @@ public class TRACER : IChessBot
 
         timeForTurn = timer.MillisecondsRemaining / 45; //Calculate time for turn TODO
 
-        for (currentDepth = 1; currentDepth <= MAX_DEPTH; currentDepth++)
+        for (currentDepth = 0; currentDepth <= MAX_DEPTH; currentDepth++)
         {
             Search(board, currentDepth, -MATE, MATE, 0);
 
