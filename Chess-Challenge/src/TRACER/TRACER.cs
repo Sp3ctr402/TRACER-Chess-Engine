@@ -10,15 +10,19 @@ using System.Runtime.InteropServices;
 public class TRACER : IChessBot
 {
     //Constant Variables
-    private int MAX_DEPTH = 5; //Max Search depth
+    private int MAX_DEPTH = 6; //Max Search depth
     private const int QSEARCH_DEPTH = 8; //QSearch depth
     private const int MATE = 30000; //Score for Mate
+    private const int ASPIRATION_WINDOW = 100; //size of the aspiration window
 
     //Global Variables
     private Move bestMove; //best Move that will be played
     private Move bestMovePrevIteration; //best Move from the previous Iteration 
+    private int bestScorePrevIteration = 0; //the score from the best move of previous Iteration
     private int currentDepth; //Depth we are currently searching 
     private int timeForTurn; //Time the engine has to make a turn
+    private int alphaWindow; //Alpha Value for AB-Pruning
+    private int betaWindow; //Beta Value for AB-Pruning
 
     //------------------------- #DEBUG -------------------------
     private int nodesSearched;
@@ -47,16 +51,23 @@ public class TRACER : IChessBot
 
         //Set MaxDepth depending on pieces on the board TODO
 
-
         timeForTurn = timer.MillisecondsRemaining / 45; //Calculate time for turn TODO
 
         for (currentDepth = 0; currentDepth <= MAX_DEPTH; currentDepth++)
         {
-            Search(board, currentDepth, -MATE, MATE, 0);
+            //Aspiration Windows
+            alphaWindow = bestScorePrevIteration - ASPIRATION_WINDOW;
+            betaWindow = bestScorePrevIteration + ASPIRATION_WINDOW;
+
+            Search(board, currentDepth, alphaWindow, betaWindow, 0);
 
             //------------------------- #DEBUG -------------------------  
-            Console.WriteLine("NoPS/QSP: {0}/{2} | AB-Pruned:{5} | DeltaPruned: {3} | Eval: {1} | Depth: {4}"
-                , nodesSearched, eval.EvaluatePosition(board), qnodesSearched, deltaPruned, currentDepth, alphaBetaPruned);
+            Console.WriteLine("/////Depth: {0}/////", currentDepth);
+            Console.WriteLine("NoPS/QSP: {0}/{1}", nodesSearched, qnodesSearched);
+            Console.WriteLine("PosEval: {0}", eval.EvaluatePosition(board));
+            Console.WriteLine("AB-Pruned: {0}", alphaBetaPruned);
+            Console.WriteLine("Delta-Pruned: {0}", deltaPruned);
+            Console.WriteLine("BestMove: {0}\n", bestMove);
             //------------------------- #DEBUGEND ----------------------
             //Set bestMove from previous Iteration
             bestMovePrevIteration = bestMove;
@@ -68,9 +79,6 @@ public class TRACER : IChessBot
                 break;
             }
         }
-        //------------------------- #DEBUG -------------------------
-        Console.WriteLine("-----------------------------------------------------------------");
-        //------------------------- #DEBUGEND ----------------------
         return bestMove;
     }
 
@@ -111,10 +119,14 @@ public class TRACER : IChessBot
             if (score > alpha)
             {
                 alpha = score;
-                //only set the move at the root node
+                //only set the move and score at the root node
                 if (ply == 0)
+                {
                     bestMove = move;
+                    bestScorePrevIteration = score;
+                }          
             }
+
             //AlphaBeta Pruning
             if (alpha >= beta)
             {

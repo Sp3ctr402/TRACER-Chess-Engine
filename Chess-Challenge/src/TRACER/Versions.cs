@@ -7,4 +7,4 @@
 //TRACER_V4 Iterative Deepening(+) | MoveOrdering improvements(+)           +231 +/- 36 Elo | Lichess implemented (+)
 //Best Move prev Iteration as first move to look at
 
-//TRACER_V5| Search Extensions(-) | Late Move Reduction(-)                  +XXX +/- XX Elo
+//TRACER_V5 Aspiration Windows(-) | Search Extension(-)                     +XXX +/- XX Elo
