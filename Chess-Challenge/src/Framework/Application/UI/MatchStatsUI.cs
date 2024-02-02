@@ -11,11 +11,12 @@ namespace ChessChallenge.Application
         {
             if (controller.PlayerWhite.IsBot && controller.PlayerBlack.IsBot)
             {
-                int nameFontSize = UIHelper.ScaleInt(40);
-                int regularFontSize = UIHelper.ScaleInt(35);
-                int headerFontSize = UIHelper.ScaleInt(45);
+                int nameFontSize = UIHelper.ScaleInt(35);
+                int regularFontSize = UIHelper.ScaleInt(30);
+                int headerFontSize = UIHelper.ScaleInt(40);
                 Color col = new(180, 180, 180, 255);
-                Vector2 startPos = UIHelper.Scale(new Vector2(1500, 150));
+                Vector2 startPos = UIHelper.Scale(new Vector2(1400, 90));
+                Vector2 startPos2 = UIHelper.Scale(new Vector2(1700, 230));
                 float spacingY = UIHelper.Scale(35);
 
                 DrawNextText($"Game {controller.CurrGameNumber} of {controller.TotalGameCount}", headerFontSize, Color.WHITE);
@@ -42,12 +43,27 @@ namespace ChessChallenge.Application
                     DrawNextText($"Num Timeouts: {stats.NumTimeouts}", regularFontSize, col);
                     DrawNextText($"Num Illegal Moves: {stats.NumIllegalMoves}", regularFontSize, col);
                     DrawNextText($"Winrate: {(float)stats.NumWins / (controller.CurrGameNumber - 1) * 100}%", regularFontSize, col);
+                    DrawBotInfo(stats.BotInfo);
                 }
 
                 void DrawNextText(string text, int fontSize, Color col)
                 {
                     UIHelper.DrawText(text, startPos, fontSize, 1, col);
                     startPos.Y += spacingY;
+                }
+
+                void DrawNextText2(string text, int fontSize, Color col)
+                {
+                    UIHelper.DrawText(text, startPos2, fontSize, 1, col);
+                    startPos2.Y += spacingY;
+                }
+
+                void DrawBotInfo(API.BotInfo info)
+                {
+                    if (!info.IsValid) return;
+                    DrawNextText2($"Depth: {info.Depth}", regularFontSize, Color.RED);
+                    DrawNextText2($"Evaluation: {info.Evaluation}", regularFontSize, Color.YELLOW);
+                    DrawNextText2($"{info.Move}", regularFontSize, Color.PURPLE);
                 }
             }
         }
