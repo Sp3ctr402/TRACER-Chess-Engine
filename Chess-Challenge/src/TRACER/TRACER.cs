@@ -20,7 +20,7 @@ public class TRACER : IChessBot
 
     //Constant Variables
     //Max Search depth
-    private int MAX_DEPTH = 40; 
+    private int MAX_DEPTH = 50; 
     //Score for Mate
     private const int MATE = 30000; 
     //Size of TTable in MB
@@ -74,7 +74,10 @@ public class TRACER : IChessBot
         //Reset bestMove at start of think method
         bestMove = Move.NullMove; 
         //Reset bestMove previous Iteration 
-        bestMovePrevIteration = Move.NullMove; 
+        bestMovePrevIteration = Move.NullMove;
+        //Detect Game Phase of Evaluation to get the proper piece values
+        eval.DetectGamePhase(board, BitboardHelper.GetNumberOfSetBits(board.GetPieceBitboard(PieceType.Queen, true )), 
+                                    BitboardHelper.GetNumberOfSetBits(board.GetPieceBitboard(PieceType.Queen, false)));
 
 
         timeForTurn = timer.MillisecondsRemaining / 45; //Make a function to determine if the Search time has been reached TODO
@@ -93,6 +96,7 @@ public class TRACER : IChessBot
             Console.WriteLine("Del-Pruned:  {0}", deltaPruned);
             Console.WriteLine("TTable-Used: {0}\n", ttableUsed);
             //------------------------- #DEBUGEND ----------------------
+
             //Set bestMove from previous Iteration
             bestMovePrevIteration = bestMove;
 
@@ -107,6 +111,13 @@ public class TRACER : IChessBot
             lastDepth = currentDepth;
             lastEval = score;
             lastMove = $"{bestMove}";
+        }
+
+        if(bestMove.IsNull)
+        {
+            Move[] moves = board.GetLegalMoves();
+            order.OrderMoves(moves, board);
+            return moves[1];
         }
 
         return bestMove;

@@ -14,7 +14,11 @@ namespace Chess_Challenge.src.TRACER
 
         //Global variables
         private Move prevIterationBestMove;
-        private static readonly int[] PieceValues = { 0, 94, 281, 297, 512, 936, 100000 };
+
+        // Piece values:
+        // https://en.wikipedia.org/wiki/Chess_piece_relative_value - Alpha Zero values
+        //---------------------------------------------.,   P,   K,   B,   R,   Q,      K
+        private static readonly int[] pieceValues = { 0, 100, 305, 333, 563, 950, 100000 };
 
         public void SetPrevIterationBestMove(Move move)
         {
@@ -57,7 +61,7 @@ namespace Chess_Challenge.src.TRACER
 
             //Promoting Pawns is usually a good idea
             if (move.IsPromotion)
-                moveScoreGuess += PieceValues[(int)move.PromotionPieceType];
+                moveScoreGuess += pieceValues[(int)move.PromotionPieceType];
 
             //Putting figures into the attack of opposite pawns is usually bad
             if (board.SquareIsAttackedByOpponentPawn(targetSquare))

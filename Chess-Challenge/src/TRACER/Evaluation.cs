@@ -1,5 +1,6 @@
 ﻿using ChessChallenge.API;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Raylib_cs;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,80 +13,60 @@ namespace Chess_Challenge.src.TRACER
 {
     internal class Evaluation
     {
-        // Piece values:                                .,   P,   K,   B,   R,   Q,      K
-        private static readonly int[] mgPieceValues = { 0,  82, 337, 365, 477, 1025, 100000};
-        private static readonly int[] egPieceValues = { 0,  94, 281, 297, 512,  936, 100000};
+        // Piece values:
+        // https://en.wikipedia.org/wiki/Chess_piece_relative_value - Larry Kaufman's values 
+        // (for rooks/queens add both and divide by 2)
+        // middlegame is when each side has the same amount of queens
+        // threshold is when there is an imbalance of queens
+        // endgame is when there are no queens on the board
+        // Queen values dont change since when there a equal numbers they cancel out
+        //--------------------------------------------{ .,    P,   K,   B,   R,   Q,      K}
+        private static readonly int[] mgPieceValues = { 0,   80, 305, 333, 460, 905, 100000};
+        private static readonly int[] thPieceValues = { 0,   90, 305, 333, 485, 905, 100000};
+        private static readonly int[] egPieceValues = { 0,  100, 305, 333, 515, 905, 100000};
+        private int[] pieceValues;
 
-        //Midgame detection -> is 1 when all pieces are on the board
-        private static double Mgd(Board board)
+
+        //Function to detect GamePhases according to Larry Kaufman
+        //https://en.wikipedia.org/wiki/Chess_piece_relative_value
+        public void DetectGamePhase(Board board, int numWhiteQueens, int numBlackQueens)
         {
-            double popCount = BitboardHelper.GetNumberOfSetBits(board.AllPiecesBitboard);
-            return popCount / 32.0;
-        }
-        //Endgame detection -> gets near 1 if less figures are on the board
-        private static double Egd(Board board)
-        {
-            return 1 - Mgd(board);
-        }
-
-        //Get the value of a single piece regarding all parameters 
-        public int GetFigureScore(Board board, int squareIndex, Piece piece)
-        {
-            
-            int figureScore = 0;    //the Value the piece has on the given square
-            int[] mgTable = mgPawnTableW;   //PiecesquareTable to use for midgame
-            int[] egTable = egPawnTableW;   //PiecesquareTable to use for endgame
-            double midGame = Mgd(board); //MidGame Value, to just calc once
-            double endGame = Egd(board); //EndGame Value, to just calc once
-
-
-            //Figure out which PieceSquare MidGame and EndGame Table to use
-            switch (piece.PieceType)
+            // middle game (both sides have queens)
+            // end game (both sides have no queens)
+            //meaning if both sides are equal we just have to look, 
+            //if there is a queen on the board to determine game phase
+            if (numWhiteQueens == numBlackQueens)
             {
-                case PieceType.None:
-                    figureScore = 0;
-                    break;
-                case PieceType.Pawn:
-                    mgTable = piece.IsWhite ? mgPawnTableW : mgPawnTableB;
-                    egTable = piece.IsWhite ? egPawnTableW : egPawnTableB;
-                    break;
-                case PieceType.Knight:
-                    mgTable = piece.IsWhite ? mgKnightTableW : mgKnightTableB;
-                    egTable = piece.IsWhite ? egKnightTableW : egKnightTableB;
-                    break;
-                case PieceType.Bishop:
-                    mgTable = piece.IsWhite ? mgBishopTableW : mgBishopTableB;
-                    egTable = piece.IsWhite ? egBishopTableW : egBishopTableB;
-                    break;
-                case PieceType.Rook:
-                    mgTable = piece.IsWhite ? mgRookTableW : mgRookTableB;
-                    egTable = piece.IsWhite ? egRookTableW : egRookTableB;
-                    break;
-                case PieceType.Queen:
-                    mgTable = piece.IsWhite ? mgQueenTableW : mgQueenTableB;
-                    egTable = piece.IsWhite ? egQueenTableW : egQueenTableB;
-                    break;
-                case PieceType.King:
-                    mgTable = piece.IsWhite ? mgKingTableW : mgKingTableB;
-                    egTable = piece.IsWhite ? egKingTableW : egKingTableB;
-                    break;
-                default:
-                    break;
-            }
-            //Add the Value of the Piece in the given Stage
-            figureScore += (int)(midGame * mgPieceValues[(int)piece.PieceType] + endGame * egPieceValues[(int)piece.PieceType]);
-            //Add the value of the square for the given piece to its value
-            figureScore += (int)(midGame * mgTable[squareIndex] + endGame * egTable[squareIndex]);
+                if (numWhiteQueens != 0)
+                {
+                    // middle game pieceValue
+                    pieceValues = mgPieceValues;
+                }
 
-            //return final value for the piece
-            return figureScore;
+                //since both sides have equal number of queens 
+                //and there are no queens on the board, its end game
+                pieceValues = egPieceValues;
+            }
+
+            //since there is an queen imbalance (both sides dont have equal nums of queens)
+            //it must be threshold
+            else
+            {
+                pieceValues = thPieceValues;
+            }
+            
         }
 
+
+        //Function to calculate Material Balance
         public int EvaluatePosition(Board board)
         {
-            int whiteMaterial = 0;  //Value of white Material
-            int blackMaterial = 0;  //Value of black Material
-            int squareIndex;    //Square index (0-63) of the piece
+            // Value of white Material
+            int whiteMaterial = 0;
+            //Value of black Material
+            int blackMaterial = 0;
+            //Square index (0-63) of the piece
+            int squareIndex;
 
             ulong pieces = board.AllPiecesBitboard; //bitboard where each square containing a piece is turned to 1
 
@@ -103,154 +84,45 @@ namespace Chess_Challenge.src.TRACER
             //return Material balance
             return whiteMaterial - blackMaterial;
         }
-    
-        #region PieceSqaureTables - PESTOS Evaluation
-        //Index 0-7 are squares a1 - h1, 8-15 a2-h2 etc
-        private static readonly int[] mgPawnTableW =
+
+
+        //Figure to get the value of a single piece regarding all parameters 
+        public int GetFigureScore(Board board, int squareIndex, Piece piece)
         {
-               0,   0,   0,   0,   0,   0,  0,   0,
-             -35,  -1, -20, -23, -15,  24, 38, -22,
-             -26,  -4,  -4, -10,   3,   3, 33, -12,
-             -27,  -2,  -5,  12,  17,   6, 10, -25,
-             -14,  13,   6,  21,  23,  12, 17, -23,
-              -6,   7,  26,  31,  65,  56, 25, -20,
-              98, 134,  61,  95,  68, 126, 34, -11,
-               0,   0,   0,   0,   0,   0,  0,   0
-        };
-        private static readonly int[] mgPawnTableB = mgPawnTableW.Reverse().ToArray();
-        private static readonly int[] egPawnTableW =
-        {
-               0,   0,   0,   0,   0,   0,   0,   0,
-              13,   8,   8,  10,  13,   0,   2,  -7,
-               4,   7,  -6,   1,   0,  -5,  -1,  -8,
-              13,   9,  -3,  -7,  -7,  -8,   3,  -1,
-              32,  24,  13,   5,  -2,   4,  17,  17,
-              94, 100,  85,  67,  56,  53,  82,  84,
-             178, 173, 158, 134, 147, 132, 165, 187,
-               0,   0,   0,   0,   0,   0,   0,   0
-        };
-        private static readonly int[] egPawnTableB = egPawnTableW.Reverse().ToArray();
-        private static readonly int[] mgKnightTableW =
-        {
-            -105, -21, -58, -33, -17, -28, -19,  -23,
-             -29, -53, -12,  -3,  -1,  18, -14,  -19,
-             -23,  -9,  15,  10,  19,  17,  25,  -16,
-             -13,   4,  16,  13,  28,  19,  21,   -8,
-              -9,  11,  19,  53,  37,  69,  12,   22,
-             -47,  60,  37,  65,  84, 129,  73,   44,
-             -73, -41,  72,  36,  23,  62,   7,  -17,
-            -167, -89, -34, -49,  61, -97, -15, -107
-        };
-        private static readonly int[] mgKnightTableB = mgKnightTableW.Reverse().ToArray();
-        private static readonly int[] egKnightTableW =
-        {
-            -29, -51, -23, -15, -22, -18, -50, -64,
-            -42, -20, -10,  -5,  -2, -20, -23, -44,
-            -23,  -3,  -1,  15,  10,  -3, -20, -22,
-            -18,  -6,  16,  25,  16,  17,   4, -18,
-            -17,   3,  22,  22,  22,  11,   8, -18,
-            -24, -20,  10,   9,  -1,  -9, -19, -41,
-            -25,  -8, -25,  -2,  -9, -25, -24, -52,
-            -58, -38, -13, -28, -31, -27, -63, -99
-        };
-        private static readonly int[] egKnightTableB = egKnightTableW.Reverse().ToArray();
-        private static readonly int[] mgBishopTableW =
-        {
-            -33,  -3, -14, -21, -13, -12, -39, -21,
-              4,  15,  16,   0,   7,  21,  33,   1,
-              0,  15,  15,  15,  14,  27,  18,  10,
-             -6,  13,  13,  26,  34,  12,  10,   4,
-             -4,   5,  19,  50,  37,  37,   7,  -2,
-            -16,  37,  43,  40,  35,  50,  37,  -2,
-            -26,  16, -18, -13,  30,  59,  18, -47,
-            -29,   4, -82, -37, -25, -42,   7,  -8
-        };
-        private static readonly int[] mgBishopTableB = mgBishopTableW.Reverse().ToArray();
-        private static readonly int[] egBishopTableW =
-        {
-            -23,  -9, -23,  -5, -9, -16,  -5, -17,
-            -14, -18,  -7,  -1,  4,  -9, -15, -27,
-            -12,  -3,   8,  10, 13,   3,  -7, -15,
-             -6,   3,  13,  19,  7,  10,  -3,  -9,
-             -3,   9,  12,   9, 14,  10,   3,   2,
-              2,  -8,   0,  -1, -2,   6,   0,   4,
-             -8,  -4,   7, -12, -3, -13,  -4, -14,
-            -14, -21, -11,  -8, -7,  -9, -17, -24
-        };
-        private static readonly int[] egBishopTableB = egBishopTableW.Reverse().ToArray();
-        private static readonly int[] mgRookTableW =
-        {
-            -19, -13,   1,  17, 16,  7, -37, -26,
-            -44, -16, -20,  -9, -1, 11,  -6, -71,
-            -45, -25, -16, -17,  3,  0,  -5, -33,
-            -36, -26, -12,  -1,  9, -7,   6, -23,
-            -24, -11,   7,  26, 24, 35,  -8, -20,
-             -5,  19,  26,  36, 17, 45,  61,  16,
-             27,  32,  58,  62, 80, 67,  26,  44,
-             32,  42,  32,  51, 63,  9,  31,  43
-        };
-        private static readonly int[] mgRookTableB = mgRookTableW.Reverse().ToArray();
-        private static readonly int[] egRookTableW =
-        {
-            -9,  2,  3, -1, -5, -13,   4, -20,
-            -6, -6,  0,  2, -9,  -9, -11,  -3,
-            -4,  0, -5, -1, -7, -12,  -8, -16,
-             3,  5,  8,  4, -5,  -6,  -8, -11,
-             4,  3, 13,  1,  2,   1,  -1,   2,
-             7,  7,  7,  5,  4,  -3,  -5,  -3,
-            11, 13, 13, 11, -3,   3,   8,   3,
-            13, 10, 18, 15, 12,  12,   8,   5
-        };
-        private static readonly int[] egRookTableB = egRookTableW.Reverse().ToArray();
-        private static readonly int[] mgQueenTableW =
-        {
-             -1, -18,  -9,  10, -15, -25, -31, -50,
-            -35,  -8,  11,   2,   8,  15,  -3,   1,
-            -14,   2, -11,  -2,  -5,   2,  14,   5,
-             -9, -26,  -9, -10,  -2,  -4,   3,  -3,
-            -27, -27, -16, -16,  -1,  17,  -2,   1,
-            -13, -17,   7,   8,  29,  56,  47,  57,
-            -24, -39,  -5,   1, -16,  57,  28,  54,
-            -28,   0,  29,  12,  59,  44,  43,  45
-        };
-        private static readonly int[] mgQueenTableB = mgQueenTableW.Reverse().ToArray();
-        private static readonly int[] egQueenTableW =
-        {
-            -33, -28, -22, -43,  -5, -32, -20, -41,
-            -22, -23, -30, -16, -16, -23, -36, -32,
-            -16, -27,  15,   6,   9,  17,  10,   5,
-            -18,  28,  19,  47,  31,  34,  39,  23,
-              3,  22,  24,  45,  57,  40,  57,  36,
-            -20,   6,   9,  49,  47,  35,  19,   9,
-            -17,  20,  32,  41,  58,  25,  30,   0,
-             -9,  22,  22,  27,  27,  19,  10,  20
-        };
-        private static readonly int[] egQueenTableB = egQueenTableW.Reverse().ToArray();
-        private static readonly int[] mgKingTableW =
-        {
-            -15,  36,  12, -54,   8, -28,  24,  14,
-              1,   7,  -8, -64, -43, -16,   9,   8,
-            -14, -14, -22, -46, -44, -30, -15, -27,
-            -49,  -1, -27, -39, -46, -44, -33, -51,
-            -17, -20, -12, -27, -30, -25, -14, -36,
-             -9,  24,   2, -16, -20,   6,  22, -22,
-             29,  -1, -20,  -7,  -8,  -4, -38, -29,
-            -65,  23,  16, -15, -56, -34,   2,  13
-        };
-        private static readonly int[] mgKingTableB = mgKingTableW.Reverse().ToArray();
-        private static readonly int[] egKingTableW =
-        {
-            -53, -34, -21, -11, -28, -14, -24, -43,
-            -27, -11,   4,  13,  14,   4,  -5, -17,
-            -19,  -3,  11,  21,  23,  16,   7,  -9,
-            -18,  -4,  21,  24,  27,  23,   9, -11,
-             -8,  22,  24,  27,  26,  33,  26,   3,
-             10,  17,  23,  15,  20,  45,  44,  13,
-            -12,  17,  14,  17,  17,  38,  23,  11,
-            -74, -35, -18, -18, -11,  15,   4, -17
-        };
-        private static readonly int[] egKingTableB = egKingTableW.Reverse().ToArray();
-        #endregion
+            
+            int figureScore = 0;    //the Value the piece has on the given square
+
+            //Figure out which PieceSquare MidGame and EndGame Table to use
+            switch (piece.PieceType)
+            {
+                case PieceType.None:
+                    figureScore = 0;
+                    break;
+                case PieceType.Pawn:
+                    figureScore += pieceValues[(int)PieceType.Pawn];
+                    break;
+                case PieceType.Knight:
+                    figureScore += pieceValues[(int)PieceType.Knight];
+                    break;
+                case PieceType.Bishop:
+                    figureScore += pieceValues[(int)PieceType.Bishop];
+                    break;
+                case PieceType.Rook:
+                    figureScore += pieceValues[(int)PieceType.Rook];
+                    break;
+                case PieceType.Queen:
+                    figureScore += pieceValues[(int)PieceType.Queen];
+                    break;
+                case PieceType.King:
+                    figureScore += pieceValues[(int)PieceType.King];
+                    break;
+                default:
+                    break;
+            }
+
+            //return final value for the piece
+            return figureScore;
+        }
     }
 }
 
