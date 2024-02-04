@@ -64,6 +64,8 @@ namespace ChessChallenge.Application
                     DrawNextText2($"Depth: {info.Depth}", regularFontSize, Color.RED);
                     DrawNextText2($"Evaluation: {info.Evaluation}", regularFontSize, Color.YELLOW);
                     DrawNextText2($"{info.Move}", regularFontSize, Color.PURPLE);
+                    DrawNextText2("Positions:", regularFontSize, Color.BLUE);
+                    DrawNextText2($"{info.Positions}", regularFontSize, Color.BLUE);
                 }
             }
         }

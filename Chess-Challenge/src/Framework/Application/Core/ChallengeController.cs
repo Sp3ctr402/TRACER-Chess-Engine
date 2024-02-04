@@ -97,9 +97,9 @@ namespace ChessChallenge.Application
             board = new Board();
             bool isGameWithHuman = whiteType is PlayerType.Human || blackType is PlayerType.Human;
             int fenIndex = isGameWithHuman ? 0 : botMatchGameIndex / 2;
-            //board.LoadPosition(botMatchStartFens[fenIndex]);
+            board.LoadPosition(botMatchStartFens[fenIndex]);
             //
-            board.LoadPosition("8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1"); //long winning combination
+            //board.LoadPosition("8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1"); //long winning combination
             //
 
             // Player Setup
