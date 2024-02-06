@@ -33,15 +33,32 @@ namespace Chess_Challenge.src.TRACER
         //count to calculate Index of an entry
         public readonly ulong count;
 
-        //the Board
-        Board board;
+
+        //Function to calculate FillPercentage (DEBUG)
+        public double CalculateFillPercentage()
+        {
+            // count occupied entries
+            int occupiedEntries = 0;
+            foreach (var entry in entries)
+            {
+                if (entry.key != 0)
+                {
+                    occupiedEntries++;
+                }
+            }
+
+            // calculate filled percentage
+            double fillPercentage = (double)occupiedEntries / entries.Length * 100;
+            // round to two decimal 
+            fillPercentage = Math.Round(fillPercentage, 2);
+            
+            return fillPercentage;
+        }
+
 
         //Constructor
-        public TranspositionTable(Board board, int sizeMB)
+        public TranspositionTable(int sizeMB)
         {
-            //the given board will be the board var of the class
-            this.board = board;
-
             //the size of a single entry in bytes
             int ttEntrySizeBytes = System.Runtime.InteropServices.Marshal.SizeOf<TranspositionTable.Entry>();
             //the desired table size in bytes
@@ -63,18 +80,15 @@ namespace Chess_Challenge.src.TRACER
         }
 
         //Function to get the Index of an entry
-        public ulong Index
+        public ulong Index(ulong key)
         {
-            get
-            {
-               return board.ZobristKey % count; 
-            }
+            return key % count; 
         }
 
         //Function to get the stored Move from an entry
-        public Move TryGetStoredMove()
+        public Move TryGetStoredMove(ulong key)
         {
-            return entries[Index].move;            
+            return entries[Index(key)].move;            
         }
 
         //Function to try to lookup eval
@@ -85,13 +99,13 @@ namespace Chess_Challenge.src.TRACER
         }
 
         //Function to actually lookup the evaluation
-        public int LookupEvaluation(int depth, int plyFromRoot, int alpha, int beta)
+        public int LookupEvaluation(ulong key,int depth, int plyFromRoot, int alpha, int beta)
         {
             //look at the entry of the index
-            Entry entry = entries[Index];
+            Entry entry = entries[Index(key)];
 
             //if the key is found then replace corresponding score
-            if(entry.key == board.ZobristKey)
+            if(entry.key == key)
             {
                 //Only use stored evaluation if it has been searched to at least the same depth as would be searched now
                 if(entry.depth >= depth)
@@ -120,14 +134,14 @@ namespace Chess_Challenge.src.TRACER
         }
 
         //function to store the evaluation
-        public void StoreEvaluation(int depth, int plyFromRoot, int eval, int nodeType, Move move)
+        public void StoreEvaluation(ulong key ,int depth, int plyFromRoot, int eval, int nodeType, Move move)
         {
             //index of the entry
-            ulong index = Index;
+            ulong index = Index(key);
 
             //write a new entry
-            Entry entry = new Entry(board.ZobristKey, eval, (byte)depth, (byte)nodeType, move);
-            entries[Index] = entry;
+            Entry entry = new Entry(key , eval, (byte)depth, (byte)nodeType, move);
+            entries[Index(key)] = entry;
         }
 
         //Function to find an entry with the index calculated

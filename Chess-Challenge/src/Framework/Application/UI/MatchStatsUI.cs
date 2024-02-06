@@ -66,6 +66,11 @@ namespace ChessChallenge.Application
                     DrawNextText2($"{info.Move}", regularFontSize, Color.PURPLE);
                     DrawNextText2("Positions:", regularFontSize, Color.BLUE);
                     DrawNextText2($"{info.Positions}", regularFontSize, Color.BLUE);
+                    DrawNextText2("Pruned:", regularFontSize, Color.MAGENTA);
+                    DrawNextText2($"{info.PositionsPruned}", regularFontSize, Color.MAGENTA);
+                    DrawNextText2($"TTable:", regularFontSize, Color.LIME);
+                    DrawNextText2($"{info.TTableFilled} %", regularFontSize, Color.LIME);
+                    DrawNextText2($"{info.noGoodMove}", regularFontSize, Color.WHITE);
                 }
             }
         }

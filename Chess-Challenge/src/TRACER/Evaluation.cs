@@ -45,7 +45,11 @@ namespace Chess_Challenge.src.TRACER
 
                 //since both sides have equal number of queens 
                 //and there are no queens on the board, its end game
-                pieceValues = egPieceValues;
+                else
+                {                 
+                    pieceValues = egPieceValues;
+                }
+
             }
 
             //since there is an queen imbalance (both sides dont have equal nums of queens)
@@ -68,7 +72,12 @@ namespace Chess_Challenge.src.TRACER
             //Square index (0-63) of the piece
             int squareIndex;
 
-            ulong pieces = board.AllPiecesBitboard; //bitboard where each square containing a piece is turned to 1
+            //bitboard where each square containing a piece is turned to 1
+            ulong pieces = board.AllPiecesBitboard; 
+
+            //Detect Game Phase of Evaluation to get the proper piece values
+            DetectGamePhase(board, BitboardHelper.GetNumberOfSetBits(board.GetPieceBitboard(PieceType.Queen, true)),
+                                   BitboardHelper.GetNumberOfSetBits(board.GetPieceBitboard(PieceType.Queen, false)));
 
             //As long as there a pieces on the board (var pieces is unequal to zero) get the Index of that
             //square and calculate the pieces value and add it to its color Material
@@ -76,9 +85,9 @@ namespace Chess_Challenge.src.TRACER
             {
                 Piece piece = board.GetPiece(new(squareIndex = BitboardHelper.ClearAndGetIndexOfLSB(ref pieces)));
                 if (piece.IsWhite)
-                    whiteMaterial += GetFigureScore(board, squareIndex, piece);
+                    whiteMaterial += GetFigureScore(board, squareIndex, piece, pieceValues);
                 else
-                    blackMaterial += GetFigureScore(board, squareIndex, piece);
+                    blackMaterial += GetFigureScore(board, squareIndex, piece, pieceValues);
             }
 
             //return Material balance
@@ -87,7 +96,7 @@ namespace Chess_Challenge.src.TRACER
 
 
         //Figure to get the value of a single piece regarding all parameters 
-        public int GetFigureScore(Board board, int squareIndex, Piece piece)
+        public int GetFigureScore(Board board, int squareIndex, Piece piece, int[] pieceValues)
         {
             
             int figureScore = 0;    //the Value the piece has on the given square
