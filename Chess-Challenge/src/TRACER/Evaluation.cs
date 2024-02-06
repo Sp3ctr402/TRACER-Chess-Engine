@@ -27,9 +27,25 @@ namespace Chess_Challenge.src.TRACER
         private int[] pieceValues;
 
 
-        //Function to detect GamePhases according to Larry Kaufman
-        //https://en.wikipedia.org/wiki/Chess_piece_relative_value
-        public void DetectGamePhase(Board board, int numWhiteQueens, int numBlackQueens)
+        // A function to multiply Middle Game Values with
+        // gets closer to zero the less enemy pieces are on the board
+        private double MidGameValue(int numEnemyPieces)
+        {
+            return numEnemyPieces / 16.0;
+        }
+
+
+        // A function to multiply End Game Values with
+        // gets closer to one the less enemy pieces are on the board
+        private double EndGameValue(int numEnemyPieces)
+        {
+            return 1 - MidGameValue(numEnemyPieces);
+        }
+
+
+        // Function to detect GamePhases according to Larry Kaufman and adjust pieceValues
+        // https://en.wikipedia.org/wiki/Chess_piece_relative_value
+        private void DetectPieceValues(int numWhiteQueens, int numBlackQueens)
         {
             // middle game (both sides have queens)
             // end game (both sides have no queens)
@@ -62,76 +78,150 @@ namespace Chess_Challenge.src.TRACER
         }
 
 
-        //Function to calculate Material Balance
+        // Function to calculate Material Balance
         public int EvaluatePosition(Board board)
         {
             // Value of white Material
             int whiteMaterial = 0;
-            //Value of black Material
+            // Value of black Material
             int blackMaterial = 0;
-            //Square index (0-63) of the piece
+            // Square index (0-63) of the piece
             int squareIndex;
+            // number of enemy pieces depending on which player is to move
+            int numberOfEnemyPieces = board.IsWhiteToMove ? BitboardHelper.GetNumberOfSetBits(board.BlackPiecesBitboard) :
+                                                            BitboardHelper.GetNumberOfSetBits(board.WhitePiecesBitboard);
+            // MidGame multiplier
+            double midGame = MidGameValue(numberOfEnemyPieces);
+            // EndGame multiplier
+            double endGame = EndGameValue(numberOfEnemyPieces);
+
 
             //bitboard where each square containing a piece is turned to 1
             ulong pieces = board.AllPiecesBitboard; 
 
-            //Detect Game Phase of Evaluation to get the proper piece values
-            DetectGamePhase(board, BitboardHelper.GetNumberOfSetBits(board.GetPieceBitboard(PieceType.Queen, true)),
-                                   BitboardHelper.GetNumberOfSetBits(board.GetPieceBitboard(PieceType.Queen, false)));
 
-            //As long as there a pieces on the board (var pieces is unequal to zero) get the Index of that
-            //square and calculate the pieces value and add it to its color Material
+            //Detect Game Phase of Evaluation to get the proper piece values
+            DetectPieceValues(BitboardHelper.GetNumberOfSetBits(board.GetPieceBitboard(PieceType.Queen, true)),
+                              BitboardHelper.GetNumberOfSetBits(board.GetPieceBitboard(PieceType.Queen, false)));
+
+
+            // As long as there a pieces on the board (var pieces is unequal to zero) get the Index of that
+            // square and calculate the pieces value and add it to its color Material
+            // ClearAndGetIndex will set the corresponding bit to 0 so we dont look at the same piece twice
             while (pieces != 0)
             {
                 Piece piece = board.GetPiece(new(squareIndex = BitboardHelper.ClearAndGetIndexOfLSB(ref pieces)));
                 if (piece.IsWhite)
-                    whiteMaterial += GetFigureScore(board, squareIndex, piece, pieceValues);
+                    whiteMaterial += GetFigureScore(board, squareIndex, piece, pieceValues, midGame, endGame);
                 else
-                    blackMaterial += GetFigureScore(board, squareIndex, piece, pieceValues);
+                    blackMaterial += GetFigureScore(board, squareIndex, piece, pieceValues, midGame, endGame);
             }
+
 
             //return Material balance
             return whiteMaterial - blackMaterial;
         }
 
 
-        //Figure to get the value of a single piece regarding all parameters 
-        public int GetFigureScore(Board board, int squareIndex, Piece piece, int[] pieceValues)
+        // Figure to get the value of a single piece regarding all parameters 
+        public int GetFigureScore(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
         {
-            
-            int figureScore = 0;    //the Value the piece has on the given square
+            // the Value the piece has on the given square
+            int figureScore = 0;    
+
 
             //Figure out which PieceSquare MidGame and EndGame Table to use
             switch (piece.PieceType)
             {
                 case PieceType.None:
-                    figureScore = 0;
+                    figureScore += 0;
                     break;
+
+
                 case PieceType.Pawn:
-                    figureScore += pieceValues[(int)PieceType.Pawn];
+                    figureScore += PawnEvaluation(board, squareIndex, piece, pieceValues, midGame, endGame);
                     break;
+
+
                 case PieceType.Knight:
-                    figureScore += pieceValues[(int)PieceType.Knight];
+                    figureScore += KnightEvaluation(board, squareIndex, piece, pieceValues, midGame, endGame);
                     break;
+
+
                 case PieceType.Bishop:
-                    figureScore += pieceValues[(int)PieceType.Bishop];
+                    figureScore += BishopEvaluation(board, squareIndex, piece, pieceValues, midGame, endGame);
                     break;
+
+
                 case PieceType.Rook:
-                    figureScore += pieceValues[(int)PieceType.Rook];
+                    figureScore += RookEvaluation(board, squareIndex, piece, pieceValues, midGame, endGame);
                     break;
+
+
                 case PieceType.Queen:
-                    figureScore += pieceValues[(int)PieceType.Queen];
+                    figureScore += QueenEvaluation(board, squareIndex, piece, pieceValues, midGame, endGame);
                     break;
+
+
                 case PieceType.King:
-                    figureScore += pieceValues[(int)PieceType.King];
+                    figureScore += KingEvaluation(board, squareIndex, piece, pieceValues, midGame, endGame);
                     break;
+
+
                 default:
                     break;
             }
 
-            //return final value for the piece
+
+            // return final value for the piece
             return figureScore;
         }
+    
+
+        // Piece Evaluation based on 
+        // https://www.chessprogramming.org/Evaluation_of_Pieces#Queen
+        // and https://en.wikipedia.org/wiki/Chess_piece_relative_value
+        #region Piece Evaluation
+
+
+        // Evaluate Pawns
+        // -Pawn structure  (Doubled/Passed/Connected/Isolated)
+        // -PawnValue MG/EG (depending on File and Rank)
+        // -Pawn center MG  (PieceSquareTable)
+        // -Promotion EG    (PieceSquareTable) 
+        private int PawnEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
+        {}
+
+
+        // Evaluate Knights
+        private int KnightEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
+        {}
+
+
+        // Evaluate Bishops
+        private int BishopEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
+        {}      
+
+
+        // Evaluate Rooks
+        private int RookEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
+        {}  
+
+
+        // Evaluate Queens
+        private int QueenEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
+        {}
+
+
+        // Evaluate Kings
+        private int KingEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
+        {}
+        #endregion
+
+
+        // All PieceSquareTables are stored here
+        #region PieceSquareTables
+        #endregion
     }
 }
 
