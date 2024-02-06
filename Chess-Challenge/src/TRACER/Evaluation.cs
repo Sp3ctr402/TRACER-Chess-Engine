@@ -21,9 +21,9 @@ namespace Chess_Challenge.src.TRACER
         // endgame is when there are no queens on the board
         // Queen values dont change since when there a equal numbers they cancel out
         //--------------------------------------------{ .,    P,   K,   B,   R,   Q,      K}
-        private static readonly int[] mgPieceValues = { 0,   80, 305, 333, 460, 905, 100000};
-        private static readonly int[] thPieceValues = { 0,   90, 305, 333, 485, 905, 100000};
-        private static readonly int[] egPieceValues = { 0,  100, 305, 333, 515, 905, 100000};
+        private static readonly int[] mgPieceValues = { 0, 80, 305, 333, 460, 905, 100000 };
+        private static readonly int[] thPieceValues = { 0, 90, 305, 333, 485, 905, 100000 };
+        private static readonly int[] egPieceValues = { 0, 100, 305, 333, 515, 905, 100000 };
         private int[] pieceValues;
 
 
@@ -62,7 +62,7 @@ namespace Chess_Challenge.src.TRACER
                 //since both sides have equal number of queens 
                 //and there are no queens on the board, its end game
                 else
-                {                 
+                {
                     pieceValues = egPieceValues;
                 }
 
@@ -74,7 +74,7 @@ namespace Chess_Challenge.src.TRACER
             {
                 pieceValues = thPieceValues;
             }
-            
+
         }
 
 
@@ -97,7 +97,7 @@ namespace Chess_Challenge.src.TRACER
 
 
             //bitboard where each square containing a piece is turned to 1
-            ulong pieces = board.AllPiecesBitboard; 
+            ulong pieces = board.AllPiecesBitboard;
 
 
             //Detect Game Phase of Evaluation to get the proper piece values
@@ -127,7 +127,7 @@ namespace Chess_Challenge.src.TRACER
         public int GetFigureScore(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
         {
             // the Value the piece has on the given square
-            int figureScore = 0;    
+            int figureScore = 0;
 
 
             //Figure out which PieceSquare MidGame and EndGame Table to use
@@ -176,7 +176,7 @@ namespace Chess_Challenge.src.TRACER
             // return final value for the piece
             return figureScore;
         }
-    
+
 
         // Piece Evaluation based on 
         // https://www.chessprogramming.org/Evaluation_of_Pieces#Queen
@@ -185,42 +185,49 @@ namespace Chess_Challenge.src.TRACER
 
 
         // Evaluate Pawns
-        // -Pawn structure  (Doubled/Passed/Connected/Isolated)
         // -PawnValue MG/EG (depending on File and Rank)
-        // -Pawn center MG  (PieceSquareTable)
-        // -Promotion EG    (PieceSquareTable) 
+        // -Pawn structure  (Doubled/Passed/Connected/Isolated)
         private int PawnEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
-        {}
+        { 
+            // Variables
+            int pawnScore = 0;
+            bool isIsolated = false;
+            bool isConnected = false;
+            bool isPassed = false;
+
+
+            // get the current score of a pawn
+            pawnScore += pieceValues[(int)piece.PieceType];  
+
+
+
+            return pawnScore;
+        }
 
 
         // Evaluate Knights
         private int KnightEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
-        {}
+        { }
 
 
         // Evaluate Bishops
         private int BishopEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
-        {}      
+        { }
 
 
         // Evaluate Rooks
         private int RookEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
-        {}  
+        { }
 
 
         // Evaluate Queens
         private int QueenEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
-        {}
+        { }
 
 
         // Evaluate Kings
         private int KingEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
-        {}
-        #endregion
-
-
-        // All PieceSquareTables are stored here
-        #region PieceSquareTables
+        { }
         #endregion
     }
 }
