@@ -104,7 +104,8 @@ namespace ChessChallenge.Application
             //board.LoadPosition("4k3/pbnr4/8/8/8/8/PBNR4/4K3 w - - 0 1"); //no queens
             //board.LoadPosition("8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1"); //long winning combination
             //board.LoadPosition("8/3k4/8/8/8/8/3KR3/8 w - - 0 1"); //easy mating sequence (in 12)            
-            //board.LoadPosition("4k3/8/8/8/8/2K5/2R5/2R5 w - - 0 1"); //easy mating sequence (in 5)  
+            //board.LoadPosition("4k3/8/8/8/8/2K5/2R5/2R5 w - - 0 1"); //easy mating sequence (in 5)
+            //board.LoadPosition("k6K/8/p3p3/6Pp/7P/P1P1P3/5P2/8 w - - 0 1"); //pawnType detection  
             //
 
 

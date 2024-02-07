@@ -55,10 +55,10 @@ public class TRACER : IChessBot
     //------------------------- #DEBUGEND ----------------------
 
 
-        //Fill used classes
-        Evaluation eval = new Evaluation();
-        TranspositionTable ttable = new TranspositionTable(TTABLE_SIZE_MB);
-        MoveOrdering order = new MoveOrdering();
+    //Fill used classes
+    Evaluation eval = new Evaluation();
+    TranspositionTable ttable = new TranspositionTable(TTABLE_SIZE_MB);
+    MoveOrdering order = new MoveOrdering();
 
     public Move Think(Board board, Timer timer)
     {
@@ -74,7 +74,7 @@ public class TRACER : IChessBot
         //------------------------- #DEBUGEND ----------------------
 
 
-        timeForTurn = timer.MillisecondsRemaining / 45; //Make a function to determine if the Search time has been reached TODO
+        timeForTurn = timer.MillisecondsRemaining / 60; //Make a function to determine if the Search time has been reached TODO
 
 
         for (currentDepth = 1; currentDepth <= MAX_DEPTH; currentDepth++)

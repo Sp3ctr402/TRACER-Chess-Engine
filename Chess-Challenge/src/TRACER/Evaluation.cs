@@ -20,11 +20,16 @@ namespace Chess_Challenge.src.TRACER
         // threshold is when there is an imbalance of queens
         // endgame is when there are no queens on the board
         // Queen values dont change since when there a equal numbers they cancel out
-        //--------------------------------------------{ .,    P,   K,   B,   R,   Q,      K}
+        //--------------------------------------------{ .,  P,   K,   B,   R,   Q,      K }
         private static readonly int[] mgPieceValues = { 0, 80, 305, 333, 460, 905, 100000 };
         private static readonly int[] thPieceValues = { 0, 90, 305, 333, 485, 905, 100000 };
-        private static readonly int[] egPieceValues = { 0, 100, 305, 333, 515, 905, 100000 };
+        private static readonly int[] egPieceValues = { 0,100, 305, 333, 515, 905, 100000 };
         private int[] pieceValues;
+
+
+        // Helper Variables
+        // File Mask to shift
+        private ulong FileMask = 0x0101010101010101;
 
 
         // A function to multiply Middle Game Values with
@@ -190,45 +195,271 @@ namespace Chess_Challenge.src.TRACER
         private int PawnEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
         { 
             // Variables
-            int pawnScore = 0;
-            bool isIsolated = false;
-            bool isConnected = false;
-            bool isPassed = false;
+            double pawnScore = 0;
+            int index;
+            Square square = new Square(squareIndex);
+            bool isIsolated = IsolatedPawnDetection(board, square, piece);
+            bool isConnected = !IsolatedPawnDetection(board, square, piece);
+            bool isPassed = PassedPawnDetection(board, squareIndex, piece);
+            bool isDoubled = false;
 
 
             // get the current score of a pawn
             pawnScore += pieceValues[(int)piece.PieceType];  
 
 
+            // get index of rank for black and white pieces 
+            index = (piece.IsWhite ? square.Rank - 1 : 7 - square.Rank - 1);
 
-            return pawnScore;
+
+            // get multiplier of pawn based on rank, file & gamePhase 
+            // value multiplier by rank and file when pawn is not passed
+            if(!isPassed)
+            {
+                // Evaluation of a pawn on a or h file
+                if(square.File == 0 || square.File == 7)
+                {
+                    // Get multipliers for gamephase 
+                    double[] midGameMultipliers = 
+                        {0.9, 0.9, 0.9, 0.97, 1.06, 1.21};
+                    double[] endGameMultipliers = 
+                        {1.20, 1.20, 1.25, 1.33, 1.45, 1.55};
+
+
+                    pawnScore *= (midGameMultipliers[index] * midGame + endGameMultipliers[index] * endGame);
+                }
+
+                //Evaluation of a pawn on b or g file
+                else if(square.File == 1 || square.File == 6)
+                {
+                    // Get multipliers for gamephase 
+                    double[] midGameMultipliers = 
+                        {0.95, 0.95, 0.95, 1.03, 1.12, 1.31};
+                    double[] endGameMultipliers = 
+                        {1.05, 1.05, 1.10, 1.17, 1.29, 1.44};
+
+
+                    pawnScore *= (midGameMultipliers[index] * midGame + endGameMultipliers[index] * endGame);
+                }
+
+                //Evaluation of a pawn on c or f file
+                else if(square.File == 2 || square.File == 5)
+                {
+                    // Get multipliers for gamephase 
+                    double[] midGameMultipliers = 
+                        {1.05, 1.05, 1.10, 1.17, 1.25, 1.41};
+                    double[] endGameMultipliers = 
+                        {0.95, 0.95, 1.00, 1.07, 1.16, 1.33};
+
+
+                    pawnScore *= (midGameMultipliers[index] * midGame + endGameMultipliers[index] * endGame);
+                }    
+
+                //Evaluation of a pawn on d or e file
+                else
+                {
+                    // Get multipliers for gamephase 
+                    double[] midGameMultipliers = 
+                        {1.10, 1.15, 1.20, 1.27, 1.40, 1.51};
+                    double[] endGameMultipliers = 
+                        {0.90, 0.90, 0.95, 1.00, 1.05, 1.22};
+
+
+                    pawnScore *= (midGameMultipliers[index] * midGame + endGameMultipliers[index] * endGame);
+                }                               
+            }
+
+
+            // check for pawn structures
+            // First check for isolated pawns
+            if(isIsolated)
+            {
+                // Depending on rank give a bonus or a penalty
+                // an isolated pawn on your side is probably a weakness
+                // while an isolated pawn on the enemy side can be an asset
+                double[] isolatedMultipliers =
+                    {0.80, 0.90, 1.05, 1.30, 2.1, 2.75};
+
+                pawnScore *= isolatedMultipliers[index];
+            }
+
+
+            // check for pawn connections that are not passed pawns
+            // a pawn is connected when its not isolated 
+            if(isConnected && !isPassed)
+            {
+                // Depending on rank give a bonus or penalty 
+                // connected pawns are alway strong but stronger in the opposing half
+                double[] connectedMultiplier =
+                    {1.00 ,1.05, 1.15, 1.35, 1.55, 1.75};
+
+                pawnScore *= connectedMultiplier[index];
+            }
+
+
+            // check for passed pawns that are not connected
+            if(!isConnected && isPassed)
+            {
+                // Depending on rank give a bonus or penalty 
+                // passed pawns are stronger the deeper they are in enemy territory
+                double[] passedMultiplier =
+                    {1.00, 1.05, 1.30, 1.55, 1.85, 2.15};
+
+                pawnScore *= passedMultiplier[index];
+            }
+
+
+            // check for connected passedpawns
+            if(isConnected && isPassed)
+            {
+                // Depending on rank give a bonus or penalty 
+                // passed pawns are stronger the deeper they are in enemy territory
+                double[] passedMultiplier =
+                    {1.00, 1.25, 1.55, 2.3, 3.5, 4.25};
+
+                pawnScore *= passedMultiplier[index];
+            }
+
+
+            //check for double pawns
+            if(isDoubled)
+            {
+                // a doubled pawn is always a weakness
+                pawnScore *= 0.66;
+            }
+
+
+            return (int)pawnScore;
         }
 
 
         // Evaluate Knights
+        // -Outposts
+        // -Mobility minus squares attacked by enemy pawns
+        // -Penalty for undefended minor piece
         private int KnightEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
-        { }
+        {
+            double knightScore = 0;
+
+            // get the current score of a knight
+            knightScore += pieceValues[(int)piece.PieceType];
+            
+            return (int)knightScore;
+        }
 
 
         // Evaluate Bishops
         private int BishopEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
-        { }
+        {
+            double bishopScore = 0;
+
+            // get the current score of a bishop
+            bishopScore += pieceValues[(int)piece.PieceType];
+
+            return (int)bishopScore;
+        }
 
 
         // Evaluate Rooks
         private int RookEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
-        { }
+        {
+            double rookScore = 0;
+
+            // get the current score of a rook
+            rookScore += pieceValues[(int)piece.PieceType];
+
+            return (int)rookScore;
+        }
 
 
         // Evaluate Queens
         private int QueenEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
-        { }
+        {
+            double queenScore = 0;
+
+            // get the current score of a queen
+            queenScore += pieceValues[(int)piece.PieceType];
+
+            return (int)queenScore;
+        }
 
 
         // Evaluate Kings
         private int KingEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
-        { }
+        {
+            double kingScore = 0;
+
+            // get the current score of a king
+            kingScore += pieceValues[(int)piece.PieceType];
+
+            return (int)kingScore;
+        }
         #endregion
+
+
+        #region HelperFunctions
+        // Function to check if a pawn is isolated
+        private bool IsolatedPawnDetection(Board board, Square square, Piece piece)
+        {
+            bool isIsolated = false;
+            ulong alliedPawnsBB = board.GetPieceBitboard(PieceType.Pawn, piece.IsWhite);
+
+            // check if the pawn is isolated by checking on pawns on adjacent files
+            ulong adjacentFileL = FileMask << Math.Min(0, square.File - 1);
+            ulong adjacentFileR = FileMask >> Math.Max(7, square.File + 1);
+
+            ulong adjacentFiles = adjacentFileL | adjacentFileR;
+
+
+            // if the AND-Operation of adjacentFiled and the alliedPawnsBB 
+            // gives a value of 0 than the pawn is isolated            
+            if((adjacentFiles & alliedPawnsBB) == 0)
+                isIsolated = true;
+
+
+            return isIsolated;
+        }
+
+        // Function to check if a pawn is passed
+        private bool PassedPawnDetection(Board board, int squareIndex, Piece piece)
+        {
+            bool isPassed = false;
+            ulong enemyPawnsBB = board.GetPieceBitboard(PieceType.Pawn, !piece.IsWhite);
+            Square square = new Square(squareIndex);
+            ulong passedFilesMask = FileMask << Math.Max(0, square.File - 1) |
+                                    FileMask << square.File                  |
+                                    FileMask << Math.Min(7, square.File + 1);
+            ulong passedRanksMask = piece.IsWhite ? ulong.MaxValue <<  8 * (square.Rank + 1) : ulong.MaxValue >> 8 * (8 - square.Rank);
+
+            ulong passedMask = passedFilesMask & passedRanksMask;
+
+
+            // if the &-Operation between the passedMask and the enemyPawnsBB
+            // equals 0, the pawn is a passed pawn
+            if ((passedMask & enemyPawnsBB) == 0)
+                isPassed = true;
+
+            return isPassed;
+        }
+
+        // Function to detect doubles pawns
+        private bool DoubledPawnDetection(Board board, int squareIndex, Piece piece)
+        {
+            bool isDoubled = false;
+            Square square = new Square(squareIndex);
+            ulong pawnFile = FileMask << square.File;
+            ulong alliedPawnsBB = board.GetPieceBitboard(PieceType.Pawn, piece.IsWhite);
+
+            // if the &-Operation of the file BitMask and the alliedPawnsBB is != 0, then its a doubled pawn
+            if ((alliedPawnsBB & pawnFile) != 0)
+                isDoubled = true;
+
+            return isDoubled;
+        }
+
+        #endregion
+
+
     }
 }
 
