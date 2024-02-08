@@ -336,6 +336,7 @@ namespace Chess_Challenge.src.TRACER
         // Evaluate Knights
         // -Outposts
         // -Mobility minus squares attacked by enemy pawns
+        // -decreasing value as pawns disappear
         // -Penalty for undefended minor piece
         private int KnightEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
         {
