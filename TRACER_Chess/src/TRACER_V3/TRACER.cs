@@ -1,10 +1,5 @@
 using Chess_Challenge.src.TRACER_V3;
 using ChessChallenge.API;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.IO;
-using System;
-using System.Windows;
 
 //TRACER_V1 NegaMax(+) | AlphaBeta(+) | Material Balance(+)
 //TRACER_V2 PieceSquareTable (+) | Endgame Transition (+)               +/- 0 Elo
@@ -122,7 +117,7 @@ public class TRACER_V3 : IChessBot
 
         //Update alpha if necessary
         if (alpha < standPat)
-            alpha = standPat;  
+            alpha = standPat;
 
         //Find all capture moves and order them
         Move[] qSearchMoves = board.GetLegalMoves(true);

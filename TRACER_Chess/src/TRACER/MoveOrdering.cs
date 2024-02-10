@@ -1,10 +1,5 @@
 ﻿using ChessChallenge.API;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Chess_Challenge.src.TRACER
 {
@@ -38,7 +33,7 @@ namespace Chess_Challenge.src.TRACER
                 int score2 = EvaluateMove(move2, board, thisMoveFirst);
 
                 // sort array descending order
-                return score2.CompareTo(score1); 
+                return score2.CompareTo(score1);
             });
         }
 
@@ -50,14 +45,14 @@ namespace Chess_Challenge.src.TRACER
         {
             // the final score of the move 
             int moveScore = 0;
-            
+
             PieceType movingPieceType = move.MovePieceType;
             PieceType capturePieceType = move.CapturePieceType;
             PieceType promotionPieceType = move.PromotionPieceType;
 
 
             // Guarantee to look at the hashMove first (bestMove prev Search Iteration)
-            if(move == thisMoveFirst)
+            if (move == thisMoveFirst)
             {
                 moveScore += HASHMOVE;
             }
@@ -67,7 +62,7 @@ namespace Chess_Challenge.src.TRACER
             // capture high material with low material
             // due to calculation better captures will automatically be sorted higher
             // than worse captures
-            if(move.IsCapture)
+            if (move.IsCapture)
             {
                 // Get values of pieces
                 int movingPieceValue = pieceValues[(int)movingPieceType];
@@ -75,14 +70,14 @@ namespace Chess_Challenge.src.TRACER
 
 
                 // Test on winning captures
-                if(capturePieceValue > movingPieceValue)
+                if (capturePieceValue > movingPieceValue)
                 {
                     moveScore += capturePieceValue - movingPieceValue + WINNINGCAPTURES;
                 }
 
-                
+
                 // Test on equal captures
-                else if(capturePieceValue == movingPieceValue)
+                else if (capturePieceValue == movingPieceValue)
                 {
                     moveScore += EQUALCAPTURES;
                 }
@@ -100,7 +95,7 @@ namespace Chess_Challenge.src.TRACER
 
             // Look at Promotions
             // Promotions to higher valued pieces will be sorted higher
-            if(move.IsPromotion)
+            if (move.IsPromotion)
             {
                 // Get promotion piece Value
                 int promotionPieceValue = pieceValues[(int)promotionPieceType];

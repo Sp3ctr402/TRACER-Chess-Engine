@@ -3,10 +3,10 @@
     public struct BotInfo
     {
 
-        public BotInfo(int depth = -1, 
-                       int evaluation = 0, 
-                       string move = "", 
-                       int nodesSearched = 0, 
+        public BotInfo(int depth = -1,
+                       int evaluation = 0,
+                       string move = "",
+                       int nodesSearched = 0,
                        int nodesPruned = 0,
                        double fillPercentage = 0.0,
                        int nogoodmoves = 0)

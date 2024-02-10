@@ -1,10 +1,5 @@
 ﻿using ChessChallenge.API;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace Chess_Challenge.src.TRACER
 {
@@ -17,15 +12,15 @@ namespace Chess_Challenge.src.TRACER
         //The Value for this position is the exact value
         public const int EXACT = 0;
         // A move was found during the search that was too good, meaning the opponent will play a different move earlier on,
-		// not allowing the position where this move was available to be reached. Because the search cuts off at
-		// this point (beta cut-off), an even better move may exist. This means that the evaluation for the
-		// position could be even higher, making the stored value the lower bound of the actual value.
+        // not allowing the position where this move was available to be reached. Because the search cuts off at
+        // this point (beta cut-off), an even better move may exist. This means that the evaluation for the
+        // position could be even higher, making the stored value the lower bound of the actual value.
         public const int LOWERBOUND = 1;
         // No move during the search resulted in a position that was better than the current player could get from playing a
-		// different move in an earlier position (i.e eval was <= alpha for all moves in the position).
-		// Due to the way alpha-beta search works, the value we get here won't be the exact evaluation of the position,
-		// but rather the upper bound of the evaluation. This means that the evaluation is, at most, equal to this value.
-		public const int UPPERBOUND = 2;
+        // different move in an earlier position (i.e eval was <= alpha for all moves in the position).
+        // Due to the way alpha-beta search works, the value we get here won't be the exact evaluation of the position,
+        // but rather the upper bound of the evaluation. This means that the evaluation is, at most, equal to this value.
+        public const int UPPERBOUND = 2;
 
         //Array of entries
         public Entry[] entries;
@@ -51,7 +46,7 @@ namespace Chess_Challenge.src.TRACER
             double fillPercentage = (double)occupiedEntries / entries.Length * 100;
             // round to two decimal 
             fillPercentage = Math.Round(fillPercentage, 2);
-            
+
             return fillPercentage;
         }
 
@@ -73,7 +68,7 @@ namespace Chess_Challenge.src.TRACER
         //Function to clear all entries
         public void Clear()
         {
-            for(int i = 0; i < entries.Length; i++)
+            for (int i = 0; i < entries.Length; i++)
             {
                 entries[i] = new Entry();
             }
@@ -82,13 +77,13 @@ namespace Chess_Challenge.src.TRACER
         //Function to get the Index of an entry
         public ulong Index(ulong key)
         {
-            return key % count; 
+            return key % count;
         }
 
         //Function to get the stored Move from an entry
         public Move TryGetStoredMove(ulong key)
         {
-            return entries[Index(key)].move;            
+            return entries[Index(key)].move;
         }
 
         //Function to try to lookup eval
@@ -99,31 +94,31 @@ namespace Chess_Challenge.src.TRACER
         }
 
         //Function to actually lookup the evaluation
-        public int LookupEvaluation(ulong key,int depth, int plyFromRoot, int alpha, int beta)
+        public int LookupEvaluation(ulong key, int depth, int plyFromRoot, int alpha, int beta)
         {
             //look at the entry of the index
             Entry entry = entries[Index(key)];
 
             //if the key is found then replace corresponding score
-            if(entry.key == key)
+            if (entry.key == key)
             {
                 //Only use stored evaluation if it has been searched to at least the same depth as would be searched now
-                if(entry.depth >= depth)
+                if (entry.depth >= depth)
                 {
                     //exact value has been stored so return it
-                    if(entry.nodeType == EXACT)
+                    if (entry.nodeType == EXACT)
                     {
                         return entry.value;
                     }
                     //upperbound value has been stored. If its less than alpha we dont need to
                     //search the moves in this position as they wont interest us
                     //otherwise we have to search to find the exact value
-                    if(entry.nodeType == UPPERBOUND && entry.value <= alpha)
+                    if (entry.nodeType == UPPERBOUND && entry.value <= alpha)
                     {
                         return entry.value;
                     }
                     //lowerbound value has been stored. Only return if Beta-Cutoff
-                    if(entry.nodeType == LOWERBOUND && entry.value >= beta)
+                    if (entry.nodeType == LOWERBOUND && entry.value >= beta)
                     {
                         return entry.value;
                     }
@@ -134,13 +129,13 @@ namespace Chess_Challenge.src.TRACER
         }
 
         //function to store the evaluation
-        public void StoreEvaluation(ulong key ,int depth, int plyFromRoot, int eval, int nodeType, Move move)
+        public void StoreEvaluation(ulong key, int depth, int plyFromRoot, int eval, int nodeType, Move move)
         {
             //index of the entry
             ulong index = Index(key);
 
             //write a new entry
-            Entry entry = new Entry(key , eval, (byte)depth, (byte)nodeType, move);
+            Entry entry = new Entry(key, eval, (byte)depth, (byte)nodeType, move);
             entries[Index(key)] = entry;
         }
 

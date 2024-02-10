@@ -1,26 +1,21 @@
 ﻿using ChessChallenge.API;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Chess_Challenge.src.TRACER_V3
 {
     internal class Evaluation
     {
         // Piece values:                                .,   P,   K,   B,   R,   Q,      K
-        private static readonly int[] mgPieceValues = { 0,  82, 337, 365, 477, 1025, 100000};
-        private static readonly int[] egPieceValues = { 0,  94, 281, 297, 512,  936, 100000};
+        private static readonly int[] mgPieceValues = { 0, 82, 337, 365, 477, 1025, 100000 };
+        private static readonly int[] egPieceValues = { 0, 94, 281, 297, 512, 936, 100000 };
 
 
         //Midgame detection -> is 1 when all pieces are on the board
         private static int Mgd(Board board)
         {
-            return BitOperations.PopCount(board.AllPiecesBitboard)/32;
+            return BitOperations.PopCount(board.AllPiecesBitboard) / 32;
         }
         //Endgame detection -> gets near 1 if less figures are on the board
         private static int Egd(Board board)
@@ -31,13 +26,13 @@ namespace Chess_Challenge.src.TRACER_V3
         //Get the value of a single piece regarding all parameters 
         public int GetFigureScore(Board board, int squareIndex, Piece piece)
         {
-            
+
             int figureScore = 0;    //the Value the piece has on the given square
             int[] mgTable = mgPawnTableW;   //PiecesquareTable to use for midgame
             int[] egTable = egPawnTableW;   //PiecesquareTable to use for endgame
-                
+
             //Figure out which PieceSquare MidGame and EndGame Table to use
-            switch (piece.PieceType) 
+            switch (piece.PieceType)
             {
                 case PieceType.None:
                     figureScore = 0;
@@ -102,7 +97,7 @@ namespace Chess_Challenge.src.TRACER_V3
         }
 
         #region PieceSqaureTables - PESTOS Evaluation
-            //Index 0-7 are squares a1 - h1, 8-15 a2-h2 etc
+        //Index 0-7 are squares a1 - h1, 8-15 a2-h2 etc
         private static readonly int[] mgPawnTableW =
         {
                0,   0,   0,   0,   0,   0,  0,   0,

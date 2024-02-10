@@ -1,10 +1,5 @@
 using Chess_Challenge.src.TRACER;
 using ChessChallenge.API;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.IO;
-using System;
-using System.Windows;
 
 //TRACER_V1 NegaMax(+) | AlphaBeta(+) | Material Balance(+)
 //TRACER_V2 PieceSquareTable (+) | Endgame Transition (+) 

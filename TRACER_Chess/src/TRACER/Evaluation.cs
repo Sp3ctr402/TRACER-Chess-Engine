@@ -1,13 +1,5 @@
 ﻿using ChessChallenge.API;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Raylib_cs;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Chess_Challenge.src.TRACER
 {
@@ -23,7 +15,7 @@ namespace Chess_Challenge.src.TRACER
         //--------------------------------------------{ .,  P,   K,   B,   R,   Q,      K }
         private static readonly int[] mgPieceValues = { 0, 80, 305, 333, 460, 905, 100000 };
         private static readonly int[] thPieceValues = { 0, 90, 305, 333, 485, 905, 100000 };
-        private static readonly int[] egPieceValues = { 0,100, 305, 333, 515, 905, 100000 };
+        private static readonly int[] egPieceValues = { 0, 100, 305, 333, 515, 905, 100000 };
         private int[] pieceValues;
 
 
@@ -193,7 +185,7 @@ namespace Chess_Challenge.src.TRACER
         // -PawnValue MG/EG (depending on File and Rank)
         // -Pawn structure  (Doubled/Passed/Connected/Isolated)
         private int PawnEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
-        { 
+        {
             // Variables
             double pawnScore = 0;
             int index;
@@ -205,7 +197,7 @@ namespace Chess_Challenge.src.TRACER
 
 
             // get the current score of a pawn
-            pawnScore += pieceValues[(int)piece.PieceType];  
+            pawnScore += pieceValues[(int)piece.PieceType];
 
 
             // get index of rank for black and white pieces 
@@ -214,15 +206,15 @@ namespace Chess_Challenge.src.TRACER
 
             // get multiplier of pawn based on rank, file & gamePhase 
             // value multiplier by rank and file when pawn is not passed
-            if(!isPassed)
+            if (!isPassed)
             {
                 // Evaluation of a pawn on a or h file
-                if(square.File == 0 || square.File == 7)
+                if (square.File == 0 || square.File == 7)
                 {
                     // Get multipliers for gamephase 
-                    double[] midGameMultipliers = 
+                    double[] midGameMultipliers =
                         {0.9, 0.9, 0.9, 0.97, 1.06, 1.21};
-                    double[] endGameMultipliers = 
+                    double[] endGameMultipliers =
                         {1.20, 1.20, 1.25, 1.33, 1.45, 1.55};
 
 
@@ -230,12 +222,12 @@ namespace Chess_Challenge.src.TRACER
                 }
 
                 //Evaluation of a pawn on b or g file
-                else if(square.File == 1 || square.File == 6)
+                else if (square.File == 1 || square.File == 6)
                 {
                     // Get multipliers for gamephase 
-                    double[] midGameMultipliers = 
+                    double[] midGameMultipliers =
                         {0.95, 0.95, 0.95, 1.03, 1.12, 1.31};
-                    double[] endGameMultipliers = 
+                    double[] endGameMultipliers =
                         {1.05, 1.05, 1.10, 1.17, 1.29, 1.44};
 
 
@@ -243,36 +235,36 @@ namespace Chess_Challenge.src.TRACER
                 }
 
                 //Evaluation of a pawn on c or f file
-                else if(square.File == 2 || square.File == 5)
+                else if (square.File == 2 || square.File == 5)
                 {
                     // Get multipliers for gamephase 
-                    double[] midGameMultipliers = 
+                    double[] midGameMultipliers =
                         {1.05, 1.05, 1.10, 1.17, 1.25, 1.41};
-                    double[] endGameMultipliers = 
+                    double[] endGameMultipliers =
                         {0.95, 0.95, 1.00, 1.07, 1.16, 1.33};
 
 
                     pawnScore *= (midGameMultipliers[index] * midGame + endGameMultipliers[index] * endGame);
-                }    
+                }
 
                 //Evaluation of a pawn on d or e file
                 else
                 {
                     // Get multipliers for gamephase 
-                    double[] midGameMultipliers = 
+                    double[] midGameMultipliers =
                         {1.10, 1.15, 1.20, 1.27, 1.40, 1.51};
-                    double[] endGameMultipliers = 
+                    double[] endGameMultipliers =
                         {0.90, 0.90, 0.95, 1.00, 1.05, 1.22};
 
 
                     pawnScore *= (midGameMultipliers[index] * midGame + endGameMultipliers[index] * endGame);
-                }                               
+                }
             }
 
 
             // check for pawn structures
             // First check for isolated pawns
-            if(isIsolated)
+            if (isIsolated)
             {
                 // Depending on rank give a bonus or a penalty
                 // an isolated pawn on your side is probably a weakness
@@ -286,7 +278,7 @@ namespace Chess_Challenge.src.TRACER
 
             // check for pawn connections that are not passed pawns
             // a pawn is connected when its not isolated 
-            if(isConnected && !isPassed)
+            if (isConnected && !isPassed)
             {
                 // Depending on rank give a bonus or penalty 
                 // connected pawns are alway strong but stronger in the opposing half
@@ -298,7 +290,7 @@ namespace Chess_Challenge.src.TRACER
 
 
             // check for passed pawns that are not connected
-            if(!isConnected && isPassed)
+            if (!isConnected && isPassed)
             {
                 // Depending on rank give a bonus or penalty 
                 // passed pawns are stronger the deeper they are in enemy territory
@@ -310,7 +302,7 @@ namespace Chess_Challenge.src.TRACER
 
 
             // check for connected passedpawns
-            if(isConnected && isPassed)
+            if (isConnected && isPassed)
             {
                 // Depending on rank give a bonus or penalty 
                 // passed pawns are stronger the deeper they are in enemy territory
@@ -322,7 +314,7 @@ namespace Chess_Challenge.src.TRACER
 
 
             //check for double pawns
-            if(isDoubled)
+            if (isDoubled)
             {
                 // a doubled pawn is always a weakness
                 pawnScore *= 0.66;
@@ -344,7 +336,7 @@ namespace Chess_Challenge.src.TRACER
 
             // get the current score of a knight
             knightScore += pieceValues[(int)piece.PieceType];
-            
+
             return (int)knightScore;
         }
 
@@ -414,7 +406,7 @@ namespace Chess_Challenge.src.TRACER
 
             // if the AND-Operation of adjacentFiled and the alliedPawnsBB 
             // gives a value of 0 than the pawn is isolated            
-            if((adjacentFiles & alliedPawnsBB) == 0)
+            if ((adjacentFiles & alliedPawnsBB) == 0)
                 isIsolated = true;
 
 
@@ -428,9 +420,9 @@ namespace Chess_Challenge.src.TRACER
             ulong enemyPawnsBB = board.GetPieceBitboard(PieceType.Pawn, !piece.IsWhite);
             Square square = new Square(squareIndex);
             ulong passedFilesMask = FileMask << Math.Max(0, square.File - 1) |
-                                    FileMask << square.File                  |
+                                    FileMask << square.File |
                                     FileMask << Math.Min(7, square.File + 1);
-            ulong passedRanksMask = piece.IsWhite ? ulong.MaxValue <<  8 * (square.Rank + 1) : ulong.MaxValue >> 8 * (8 - square.Rank);
+            ulong passedRanksMask = piece.IsWhite ? ulong.MaxValue << 8 * (square.Rank + 1) : ulong.MaxValue >> 8 * (8 - square.Rank);
 
             ulong passedMask = passedFilesMask & passedRanksMask;
 

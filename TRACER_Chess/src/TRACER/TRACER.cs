@@ -1,47 +1,43 @@
 #define SHOW_INFO
 using Chess_Challenge.src.TRACER;
 using ChessChallenge.API;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.IO;
 using System;
-using System.Windows;
-using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 public class TRACER : IChessBot
 {
-    #if SHOW_INFO
-        public BotInfo Info()
-        {
-            return new BotInfo(lastDepth, 
-                                currEval, 
-                                lastMove, 
-                                nodesSearched,
-                                nodesPruned,
-                                ttable.CalculateFillPercentage(),
-                                nogoodmoves
-                                );
-        }
-    #endif
+#if SHOW_INFO
+    public BotInfo Info()
+    {
+        return new BotInfo(lastDepth,
+                            currEval,
+                            lastMove,
+                            nodesSearched,
+                            nodesPruned,
+                            ttable.CalculateFillPercentage(),
+                            nogoodmoves
+                            );
+    }
+#endif
 
 
     //Constant Variables
     //Max Search depth
-    private int MAX_DEPTH = 50; 
+    private int MAX_DEPTH = 50;
     //Score for Mate
-    private const int MATE = 30000; 
+    private const int MATE = 30000;
     //Size of TTable in MB
-    private const int TTABLE_SIZE_MB = 64; 
+    private const int TTABLE_SIZE_MB = 64;
 
     //Global Variables
     //best Move that will be played
-    private Move bestMove; 
+    private Move bestMove;
     //best Move from the previous Iteration 
-    private Move bestMovePrevIteration; 
+    private Move bestMovePrevIteration;
     //Depth we are currently searching 
-    private int currentDepth; 
+    private int currentDepth;
     //Time the engine has to make a turn
-    private int timeForTurn; 
+    private int timeForTurn;
 
 
 
@@ -63,7 +59,7 @@ public class TRACER : IChessBot
     public Move Think(Board board, Timer timer)
     {
         //Reset bestMove at start of think method
-        bestMove = Move.NullMove; 
+        bestMove = Move.NullMove;
         //Reset bestMove previous Iteration 
         bestMovePrevIteration = Move.NullMove;
 
@@ -97,7 +93,7 @@ public class TRACER : IChessBot
         // If by all means we dont find a good move
         // just play the first legal move
         // we hopefully dont get here
-        if(bestMove.IsNull)
+        if (bestMove.IsNull)
         {
             nogoodmoves++;
             Move[] moves = board.GetLegalMoves();
@@ -135,11 +131,11 @@ public class TRACER : IChessBot
         //try to lookup current position in the transposition table.
         //if the current position has already been searched to at least an equal depth
         //to the search we're doing now, we can just use the recorded evaluation
-        int ttVal = ttable.LookupEvaluation(key ,depth, ply, alpha, beta);
-        if(ttVal != TranspositionTable.LOOKUPFAILED)
+        int ttVal = ttable.LookupEvaluation(key, depth, ply, alpha, beta);
+        if (ttVal != TranspositionTable.LOOKUPFAILED)
         {
-            if(ply == 0)
-            {   
+            if (ply == 0)
+            {
                 bestMove = ttable.TryGetStoredMove(key);
                 score = ttable.entries[ttable.Index(key)].value;
             }
@@ -160,7 +156,11 @@ public class TRACER : IChessBot
         bestMovePrevIteration = ply == 0 ? bestMove : ttable.TryGetStoredMove(key);
 
         // Order moves to increase AB-Pruning efficiency
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.Start();
         order.OrderMoves(moves, board, bestMovePrevIteration);
+        stopwatch.Stop();
+        Console.WriteLine("{0}", stopwatch.ElapsedMilliseconds);
 
         //evaluation bound stored in ttable
         int evaluationBound = TranspositionTable.UPPERBOUND;
@@ -180,7 +180,7 @@ public class TRACER : IChessBot
                 //------------------------- #DEBUGEND ----------------------
 
                 //Store evaluation in transposition Table
-                ttable.StoreEvaluation(key ,depth, ply, beta, TranspositionTable.LOWERBOUND, move);
+                ttable.StoreEvaluation(key, depth, ply, beta, TranspositionTable.LOWERBOUND, move);
 
                 return beta;
             }
@@ -201,7 +201,7 @@ public class TRACER : IChessBot
         }
 
         //Store evaluation in transposition Table
-        ttable.StoreEvaluation(key ,depth, ply, alpha, evaluationBound, bestMove);
+        ttable.StoreEvaluation(key, depth, ply, alpha, evaluationBound, bestMove);
 
         return alpha;
     }
