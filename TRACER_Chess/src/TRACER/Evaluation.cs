@@ -1,4 +1,5 @@
 ﻿using ChessChallenge.API;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 
 namespace Chess_Challenge.src.TRACER
@@ -87,6 +88,8 @@ namespace Chess_Challenge.src.TRACER
             // number of enemy pieces depending on which player is to move
             int numberOfEnemyPieces = board.IsWhiteToMove ? BitboardHelper.GetNumberOfSetBits(board.BlackPiecesBitboard) :
                                                             BitboardHelper.GetNumberOfSetBits(board.WhitePiecesBitboard);
+            int numberOfPawns = BitboardHelper.GetNumberOfSetBits(board.GetPieceBitboard(PieceType.Pawn, true) |
+                                                                  board.GetPieceBitboard(PieceType.Pawn, false));
             // MidGame multiplier
             double midGame = MidGameValue(numberOfEnemyPieces);
             // EndGame multiplier
@@ -109,9 +112,9 @@ namespace Chess_Challenge.src.TRACER
             {
                 Piece piece = board.GetPiece(new(squareIndex = BitboardHelper.ClearAndGetIndexOfLSB(ref pieces)));
                 if (piece.IsWhite)
-                    whiteMaterial += GetFigureScore(board, squareIndex, piece, pieceValues, midGame, endGame);
+                    whiteMaterial += GetFigureScore(board, squareIndex, piece, pieceValues, midGame, endGame, numberOfPawns);
                 else
-                    blackMaterial += GetFigureScore(board, squareIndex, piece, pieceValues, midGame, endGame);
+                    blackMaterial += GetFigureScore(board, squareIndex, piece, pieceValues, midGame, endGame, numberOfPawns);
             }
 
 
@@ -121,7 +124,7 @@ namespace Chess_Challenge.src.TRACER
 
 
         // Figure to get the value of a single piece regarding all parameters 
-        public int GetFigureScore(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
+        public int GetFigureScore(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame, int noP)
         {
             // the Value the piece has on the given square
             int figureScore = 0;
@@ -141,7 +144,7 @@ namespace Chess_Challenge.src.TRACER
 
 
                 case PieceType.Knight:
-                    figureScore += KnightEvaluation(board, squareIndex, piece, pieceValues, midGame, endGame);
+                    figureScore += KnightEvaluation(board, squareIndex, piece, pieceValues, midGame, endGame, noP);
                     break;
 
 
@@ -151,7 +154,7 @@ namespace Chess_Challenge.src.TRACER
 
 
                 case PieceType.Rook:
-                    figureScore += RookEvaluation(board, squareIndex, piece, pieceValues, midGame, endGame);
+                    figureScore += RookEvaluation(board, squareIndex, piece, pieceValues, midGame, endGame, noP);
                     break;
 
 
@@ -193,7 +196,7 @@ namespace Chess_Challenge.src.TRACER
             bool isIsolated = IsolatedPawnDetection(board, square, piece);
             bool isConnected = !IsolatedPawnDetection(board, square, piece);
             bool isPassed = PassedPawnDetection(board, squareIndex, piece);
-            bool isDoubled = false;
+            bool isDoubled = DoubledPawnDetection(board, squareIndex, piece);
 
 
             // get the current score of a pawn
@@ -329,13 +332,40 @@ namespace Chess_Challenge.src.TRACER
         // -Outposts
         // -Mobility minus squares attacked by enemy pawns
         // -decreasing value as pawns disappear
-        // -Penalty for undefended minor piece
-        private int KnightEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
+        private int KnightEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame, int noP)
         {
             double knightScore = 0;
+            Square square = new Square(squareIndex);
+            bool isOpponentHalf = piece.IsWhite ? squareIndex > 31 : squareIndex < 32;
+            
 
             // get the current score of a knight
             knightScore += pieceValues[(int)piece.PieceType];
+
+            // value of knights decreases as more pawns disappear
+            // maximum of 16 Pawns will lead to no penalty
+            knightScore -= (1 - noP / 16) * 35;
+
+            // mobility bonus 
+            // a bonus for each square the knight attacks
+            // minus each square attacked by enemy pawn
+            int numberOfSquares = 0;
+            ulong knightAttacks = BitboardHelper.GetKnightAttacks(square);
+
+            while (knightAttacks != 0) 
+            {
+                Square sq = new Square(BitboardHelper.ClearAndGetIndexOfLSB(ref knightAttacks));
+                if(!board.SquareIsAttackedByOpponentPawn(sq))
+                    numberOfSquares++;
+            }     
+            knightScore += numberOfSquares * 8;
+
+            // Outpost bonus
+            if(isOpponentHalf)
+            {
+
+            }
+
 
             return (int)knightScore;
         }
@@ -354,7 +384,7 @@ namespace Chess_Challenge.src.TRACER
 
 
         // Evaluate Rooks
-        private int RookEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
+        private int RookEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame, int noP)
         {
             double rookScore = 0;
 

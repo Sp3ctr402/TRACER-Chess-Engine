@@ -160,7 +160,7 @@ public class TRACER : IChessBot
         stopwatch.Start();
         order.OrderMoves(moves, board, bestMovePrevIteration);
         stopwatch.Stop();
-        Console.WriteLine("{0}", stopwatch.ElapsedMilliseconds);
+        Debug.WriteLine("{0}", stopwatch.Elapsed.TotalMilliseconds);
 
         //evaluation bound stored in ttable
         int evaluationBound = TranspositionTable.UPPERBOUND;
