@@ -98,14 +98,15 @@ namespace ChessChallenge.Application
             int fenIndex = isGameWithHuman ? 0 : botMatchGameIndex / 2;
             board.LoadPosition(botMatchStartFens[fenIndex]);
             //
-            //board.LoadPosition("3qk3/pbnr4/8/8/8/8/PBNR4/3QK3 w - - 0 1"); //eval test both queens
-            //board.LoadPosition("4k3/pbnr4/8/8/8/8/PBNR4/3QK3 w - - 0 1"); //queen imbalance
-            //board.LoadPosition("4k3/pbnr4/8/8/8/8/PBNR4/4K3 w - - 0 1"); //no queens
-            //board.LoadPosition("8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1"); //long winning combination
-            //board.LoadPosition("8/3k4/8/8/8/8/3KR3/8 w - - 0 1"); //easy mating sequence (in 12)            
-            //board.LoadPosition("4k3/8/8/8/8/2K5/2R5/2R5 w - - 0 1"); //easy mating sequence (in 5)
-            //board.LoadPosition("k6K/8/p3p3/6Pp/7P/P1P1P3/5P2/8 w - - 0 1"); //pawnType detection  
-            //board.LoadPosition("5k2/5p2/6p1/8/3N4/8/8/5K2 w - - 0 1"); //Knight squares
+            //board.LoadPosition("3qk3/pbnr4/8/8/8/8/PBNR4/3QK3 w - - 0 1");    //eval test both queens
+            //board.LoadPosition("4k3/pbnr4/8/8/8/8/PBNR4/3QK3 w - - 0 1");     //queen imbalance
+            //board.LoadPosition("4k3/pbnr4/8/8/8/8/PBNR4/4K3 w - - 0 1");      //no queens
+            //board.LoadPosition("8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1");    //long winning combination
+            //board.LoadPosition("8/3k4/8/8/8/8/3KR3/8 w - - 0 1");             //easy mating sequence (in 12)            
+            //board.LoadPosition("4k3/8/8/8/8/2K5/2R5/2R5 w - - 0 1");          //easy mating sequence (in 5)
+            //board.LoadPosition("k6K/8/p3p3/6Pp/7P/P1P1P3/5P2/8 w - - 0 1");   //pawnType detection  
+            //board.LoadPosition("5k2/5p2/6p1/8/3N4/8/8/5K2 w - - 0 1");        //Knight squares
+            //board.LoadPosition("5k2/5p2/2N3p1/3P4/8/8/8/5K2 w - - 0 1");      //Outpost
             //
 
 

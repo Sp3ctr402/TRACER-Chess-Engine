@@ -156,11 +156,7 @@ public class TRACER : IChessBot
         bestMovePrevIteration = ply == 0 ? bestMove : ttable.TryGetStoredMove(key);
 
         // Order moves to increase AB-Pruning efficiency
-        Stopwatch stopwatch = new Stopwatch();
-        stopwatch.Start();
         order.OrderMoves(moves, board, bestMovePrevIteration);
-        stopwatch.Stop();
-        Debug.WriteLine("{0}", stopwatch.Elapsed.TotalMilliseconds);
 
         //evaluation bound stored in ttable
         int evaluationBound = TranspositionTable.UPPERBOUND;

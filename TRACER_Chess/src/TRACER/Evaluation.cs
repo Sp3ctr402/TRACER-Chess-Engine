@@ -337,6 +337,7 @@ namespace Chess_Challenge.src.TRACER
             double knightScore = 0;
             Square square = new Square(squareIndex);
             bool isOpponentHalf = piece.IsWhite ? squareIndex > 31 : squareIndex < 32;
+            bool isProtected = ProtectionDetection(board, squareIndex, piece);
             
 
             // get the current score of a knight
@@ -361,9 +362,9 @@ namespace Chess_Challenge.src.TRACER
             knightScore += numberOfSquares * 8;
 
             // Outpost bonus
-            if(isOpponentHalf)
+            if(isOpponentHalf && isProtected)
             {
-
+                knightScore += 40;
             }
 
 
@@ -372,6 +373,10 @@ namespace Chess_Challenge.src.TRACER
 
 
         // Evaluate Bishops
+        // -Bishop Pair
+        // -Color control bonus (if one side has more bishops than the other)
+        // -Mobility minus squares blocked by own pawns
+        // -Outposts
         private int BishopEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
         {
             double bishopScore = 0;
@@ -478,6 +483,20 @@ namespace Chess_Challenge.src.TRACER
                 isDoubled = true;
 
             return isDoubled;
+        }
+
+        // Function to detect if square is protected by own pawn
+        private bool ProtectionDetection(Board board, int squareIndex, Piece piece)
+        {
+            bool isProtected = false;
+
+            Square sq1 = new Square(squareIndex - (piece.IsWhite ? 9 : -9));
+            Square sq2 = new Square(squareIndex - (piece.IsWhite ? 7 : -7));
+
+            if ((piece.IsWhite && squareIndex - 9 >= 0) || (!piece.IsWhite && squareIndex + 9 <= 63))
+                isProtected = board.GetPiece(sq1).PieceType == PieceType.Pawn || board.GetPiece(sq2).PieceType == PieceType.Pawn;
+
+            return isProtected;
         }
 
         #endregion
