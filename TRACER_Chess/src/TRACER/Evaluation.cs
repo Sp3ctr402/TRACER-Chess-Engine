@@ -100,6 +100,10 @@ namespace Chess_Challenge.src.TRACER
                                                             BitboardHelper.GetNumberOfSetBits(board.WhitePiecesBitboard);
             int numberOfPawns = BitboardHelper.GetNumberOfSetBits(board.GetPieceBitboard(PieceType.Pawn, true) |
                                                                   board.GetPieceBitboard(PieceType.Pawn, false));
+            ulong apBB = board.IsWhiteToMove ? board.GetPieceBitboard(PieceType.Pawn, true) :
+                                                   board.GetPieceBitboard(PieceType.Pawn, false);
+            ulong epBB = board.IsWhiteToMove ? board.GetPieceBitboard(PieceType.Pawn, false) :
+                                                   board.GetPieceBitboard(PieceType.Pawn, true);
             // MidGame multiplier
             double midGame = MidGameValue(numberOfEnemyPieces);
             // EndGame multiplier
@@ -122,9 +126,9 @@ namespace Chess_Challenge.src.TRACER
             {
                 Piece piece = board.GetPiece(new(squareIndex = BitboardHelper.ClearAndGetIndexOfLSB(ref pieces)));
                 if (piece.IsWhite)
-                    whiteMaterial += GetFigureScore(board, squareIndex, piece, pieceValues, midGame, endGame, numberOfPawns);
+                    whiteMaterial += GetFigureScore(board, squareIndex, piece, pieceValues, midGame, endGame, numberOfPawns, apBB, epBB);
                 else
-                    blackMaterial += GetFigureScore(board, squareIndex, piece, pieceValues, midGame, endGame, numberOfPawns);
+                    blackMaterial += GetFigureScore(board, squareIndex, piece, pieceValues, midGame, endGame, numberOfPawns, apBB, epBB);
             }
 
 
@@ -134,7 +138,8 @@ namespace Chess_Challenge.src.TRACER
 
 
         // Figure to get the value of a single piece regarding all parameters 
-        public int GetFigureScore(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame, int noP)
+        public int GetFigureScore(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame, int noP,
+                                  ulong aPawnsBB, ulong ePawnsBB)
         {
             // the Value the piece has on the given square
             int figureScore = 0;
@@ -164,7 +169,7 @@ namespace Chess_Challenge.src.TRACER
 
 
                 case PieceType.Rook:
-                    figureScore += RookEvaluation(board, squareIndex, piece, pieceValues, midGame, endGame, noP);
+                    figureScore += RookEvaluation(board, squareIndex, piece, pieceValues, midGame, endGame, noP, aPawnsBB, ePawnsBB);
                     break;
 
 
@@ -355,7 +360,7 @@ namespace Chess_Challenge.src.TRACER
 
             // value of knights decreases as more pawns disappear
             // maximum of 16 Pawns will lead to no penalty
-            knightScore -= (1 - noP / 16) * 50;
+            knightScore -= 50 * (1 - 1/16);
 
             // mobility bonus 
             // a bonus for each square the knight attacks
@@ -425,12 +430,21 @@ namespace Chess_Challenge.src.TRACER
 
         // Evaluate Rooks
         // -increasing value as pawns disappear
-        // -bonus for standing on open files
+        // -bonus for standing on open/semi-open files
         // -bonus for standing on seventh rank (danger rank)
         // -bonus for connecting rooks
-        private int RookEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame, int noP)
+        private int RookEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame, int noP,
+                                   ulong aPawnsBB, ulong ePawnsBB)
         {
+            const int OPEN_FILE_BONUS = 8;
+            const int SEVENTH_RANK_BONUS = 5;
+
             double rookScore = 0;
+            Square square = new Square(squareIndex);
+            // an open File contains no pawns so in the OpenFileDetection we need BB of both coloured Pawns
+            bool onOpenFile = OpenFileDetection(board, squareIndex, piece, aPawnsBB | ePawnsBB);
+            // for semi open files we only need to look at enemy pawns
+            bool onSemiOpenFile = SemiOpenFileDetection(board, squareIndex, piece, aPawnsBB);
 
             // get the current score of a rook
             rookScore += pieceValues[(int)piece.PieceType];
@@ -438,7 +452,26 @@ namespace Chess_Challenge.src.TRACER
 
             // value of rooks increases as more pawns disappear
             // maximum of 16 Pawns will lead to no boost
-            rookScore += (1 - noP / 16) * 50;
+            rookScore += 50 * (1 - 1 / 16);
+
+
+            // open/semi-open File Bonus
+            // first detect on semi open file, since being on an open file also means standing on semi open file
+            if (onSemiOpenFile)
+            {
+                if (onOpenFile)
+                    rookScore += OPEN_FILE_BONUS/2;
+            
+                rookScore += OPEN_FILE_BONUS/2;
+            }
+
+
+            // rook on the seventh file gets a bonus
+            // ranks go from 0 -> 7
+            // if the piece is white we look at seventh rank, if its black we look at second rank
+            if(piece.IsWhite ? square.Rank == 6 : square.Rank == 1)
+                rookScore = SEVENTH_RANK_BONUS;
+
 
             return (int)rookScore;
         }
@@ -541,6 +574,31 @@ namespace Chess_Challenge.src.TRACER
                 isProtected = board.GetPiece(sq1).PieceType == PieceType.Pawn || board.GetPiece(sq2).PieceType == PieceType.Pawn;
 
             return isProtected;
+        }
+
+        // Function to detect if piece is standing on open file
+        private bool OpenFileDetection(Board board, int squareIndex, Piece piece, ulong pawnsBB)
+        {
+            bool openFile = false;
+            Square square = new Square(squareIndex);
+            ulong rookFile = FileMask << square.File;
+
+            if ((rookFile & pawnsBB) == 0) 
+                openFile = true;
+
+            return openFile;
+        }
+        // Function to detect if piece is standing on semi-open file
+        private bool SemiOpenFileDetection(Board board, int squareIndex, Piece piece, ulong pawnsBB)
+        {
+            bool semiOpenFile = false;
+            Square square = new Square(squareIndex);
+            ulong rookFile = FileMask << square.File;
+
+            if ((rookFile & pawnsBB) == 0)
+                semiOpenFile = true;
+
+            return semiOpenFile;
         }
 
         #endregion

@@ -107,6 +107,7 @@ namespace ChessChallenge.Application
             //board.LoadPosition("k6K/8/p3p3/6Pp/7P/P1P1P3/5P2/8 w - - 0 1");   //pawnType detection  
             //board.LoadPosition("5k2/5p2/6p1/8/3N4/8/8/5K2 w - - 0 1");        //Knight squares
             //board.LoadPosition("5k2/5p2/2N3p1/3P4/8/8/8/5K2 w - - 0 1");      //Outpost
+            //board.LoadPosition("7k/8/2p5/8/8/8/8/R1R4K w - - 0 1");           //open Files / semi open File
             //
 
 
