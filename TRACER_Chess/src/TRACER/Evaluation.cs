@@ -1,6 +1,9 @@
 ﻿using ChessChallenge.API;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.ML.Transforms;
 using System;
+using System.Net.NetworkInformation;
+using System.Text;
 
 namespace Chess_Challenge.src.TRACER
 {
@@ -18,6 +21,10 @@ namespace Chess_Challenge.src.TRACER
         private static readonly int[] thPieceValues = { 0, 90, 305, 333, 485, 905, 100000 };
         private static readonly int[] egPieceValues = { 0, 100, 305, 333, 515, 905, 100000 };
         private int[] pieceValues;
+        private static readonly int mgBishopPair = 30;
+        private static readonly int thBishopPair = 40;
+        private static readonly int egBishopPair = 50;
+        private int bishopPair;
 
 
         // Helper Variables
@@ -55,6 +62,7 @@ namespace Chess_Challenge.src.TRACER
                 {
                     // middle game pieceValue
                     pieceValues = mgPieceValues;
+                    bishopPair = mgBishopPair;
                 }
 
                 //since both sides have equal number of queens 
@@ -62,6 +70,7 @@ namespace Chess_Challenge.src.TRACER
                 else
                 {
                     pieceValues = egPieceValues;
+                    bishopPair = egBishopPair;
                 }
 
             }
@@ -71,6 +80,7 @@ namespace Chess_Challenge.src.TRACER
             else
             {
                 pieceValues = thPieceValues;
+                bishopPair = thBishopPair;
             }
 
         }
@@ -345,7 +355,7 @@ namespace Chess_Challenge.src.TRACER
 
             // value of knights decreases as more pawns disappear
             // maximum of 16 Pawns will lead to no penalty
-            knightScore -= (1 - noP / 16) * 35;
+            knightScore -= (1 - noP / 16) * 50;
 
             // mobility bonus 
             // a bonus for each square the knight attacks
@@ -359,7 +369,8 @@ namespace Chess_Challenge.src.TRACER
                 if(!board.SquareIsAttackedByOpponentPawn(sq))
                     numberOfSquares++;
             }     
-            knightScore += numberOfSquares * 8;
+            knightScore += numberOfSquares * 10;
+
 
             // Outpost bonus
             if(isOpponentHalf && isProtected)
@@ -374,27 +385,60 @@ namespace Chess_Challenge.src.TRACER
 
         // Evaluate Bishops
         // -Bishop Pair
-        // -Color control bonus (if one side has more bishops than the other)
-        // -Mobility minus squares blocked by own pawns
+        // -Mobility
         // -Outposts
         private int BishopEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
         {
             double bishopScore = 0;
+            Square square = new Square(squareIndex);
+            int noB = BitboardHelper.GetNumberOfSetBits(board.GetPieceBitboard(piece.PieceType, piece.IsWhite ? true : false));
+            int noAtSq = BitboardHelper.GetNumberOfSetBits(BitboardHelper.GetSliderAttacks(piece.PieceType, square, board)); 
+            bool isOpponentHalf = piece.IsWhite ? squareIndex > 31 : squareIndex < 32;
+            bool isProtected = ProtectionDetection(board, squareIndex, piece);
 
             // get the current score of a bishop
             bishopScore += pieceValues[(int)piece.PieceType];
+
+
+            // Bishop Pair Bonus
+            // https://en.wikipedia.org/wiki/Chess_piece_relative_value - Larry Kaufman
+            if (noB == 2)
+                bishopScore += bishopPair / 2;
+
+
+            // Mobility bonus for each square attacked
+            // Mobility for knights is at max 8*8 = 64
+            // Mobility for Bishops at max are 13 field -> 80 / 13 ~ 6
+            bishopScore += noAtSq * 6;
+
+
+            // Outpost bonus
+            if (isOpponentHalf && isProtected)
+            {
+                bishopScore += 40;
+            }
+
 
             return (int)bishopScore;
         }
 
 
         // Evaluate Rooks
+        // -increasing value as pawns disappear
+        // -bonus for standing on open files
+        // -bonus for standing on seventh rank (danger rank)
+        // -bonus for connecting rooks
         private int RookEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame, int noP)
         {
             double rookScore = 0;
 
             // get the current score of a rook
             rookScore += pieceValues[(int)piece.PieceType];
+
+
+            // value of rooks increases as more pawns disappear
+            // maximum of 16 Pawns will lead to no boost
+            rookScore += (1 - noP / 16) * 50;
 
             return (int)rookScore;
         }
