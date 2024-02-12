@@ -179,7 +179,7 @@ namespace Chess_Challenge.src.TRACER
 
 
                 case PieceType.King:
-                    figureScore += KingEvaluation(board, squareIndex, piece, pieceValues, midGame, endGame);
+                    figureScore += KingEvaluation(board, squareIndex, piece, pieceValues, midGame, endGame, aPawnsBB);
                     break;
 
 
@@ -490,12 +490,26 @@ namespace Chess_Challenge.src.TRACER
 
 
         // Evaluate Kings
-        private int KingEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame)
+        // -King Safety MidGame
+        // -King centralization EndGame
+        // -Getting pinned punishment
+        private int KingEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame, 
+                                   ulong aPawnsBB)
         {
             double kingScore = 0;
 
             // get the current score of a king
             kingScore += pieceValues[(int)piece.PieceType];
+
+
+            // Mutlitply Kings Safety with midGame
+            kingScore += EvalKingsSafety(board, squareIndex, piece, aPawnsBB) * midGame;
+
+
+            // Multiply Kings Aggression with endGame
+            kingScore += EvalKingsAggression() * endGame;
+
+
 
             return (int)kingScore;
         }
@@ -588,6 +602,7 @@ namespace Chess_Challenge.src.TRACER
 
             return openFile;
         }
+        
         // Function to detect if piece is standing on semi-open file
         private bool SemiOpenFileDetection(Board board, int squareIndex, Piece piece, ulong pawnsBB)
         {
@@ -599,6 +614,32 @@ namespace Chess_Challenge.src.TRACER
                 semiOpenFile = true;
 
             return semiOpenFile;
+        }
+        
+        // Function to Evaluate Kings safety
+        private int EvalKingsSafety(Board board, int squareIndex, Piece piece, ulong aPawnsBB)
+        {
+            int safetyEval = 0;
+            Square square = new Square(squareIndex);
+            ulong KingAttacksBB = BitboardHelper.GetKingAttacks(square);
+            ulong KingBarricadeBB = KingAttacksBB & aPawnsBB;
+
+
+            return safetyEval;
+        }
+        
+        // Function to Evaluate Kings Aggression
+        private int EvalKingsAggression()
+        {
+            int aggressionEval = 0;
+
+
+            // Kings aggression is easiest to eval
+            // with PST -> the king gets higher score the closer it is
+            // to the center
+
+
+            return aggressionEval;
         }
 
         #endregion
