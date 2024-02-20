@@ -1,10 +1,9 @@
-#define SHOW_INFO
-using Chess_Challenge.src.TRACER;
+using Chess_Challenge.src.TRACER_V6;
 using ChessChallenge.API;
 using System;
 using System.Diagnostics;
 
-public class TRACER : IChessBot
+public class TRACER_V6 : IChessBot
 {
 #if SHOW_INFO
     public BotInfo Info()
@@ -27,11 +26,6 @@ public class TRACER : IChessBot
     private const int MATE = 30000;
     //Size of TTable in MB
     private const int TTABLE_SIZE_MB = 64;
-    //LateMoveReduction Variables
-    //the value to reduce depth
-    private const int LMR_REDUCTION = 1;
-    //the threshold after which move we should reduce the depth
-    private const int LMR_THRESHOLD = 3;
 
 
     //Global Variables
@@ -183,24 +177,7 @@ public class TRACER : IChessBot
         for (int i = 0; i < moves.Length; i++)
         {
             board.MakeMove(moves[i]);
-
-
-            // Late Move Reduction
-            // Assuming good move ordering, the best move will be looked at
-            // pretty early in the search so we can search a shallower depth after
-            // the first moves in the array
-            if (i >= LMR_THRESHOLD && extension == 0 && ply >= LMR_THRESHOLD && !moves[i].IsCapture && depth >= LMR_THRESHOLD)
-            {
-                score = -Search(board, depth - 1 - LMR_REDUCTION, -beta, -alpha, ply + 1);
-            }
-
-            // do a full depth search
-            else
-            {
-                score = -Search(board, depth - 1 + extension, -beta, -alpha, ply + 1);
-            }
-
-            
+            score = -Search(board, depth - 1 + extension, -beta, -alpha, ply + 1);
             board.UndoMove(moves[i]);
 
             // Move was *too* good, opponent will choose a different move earlier on to avoid this position.

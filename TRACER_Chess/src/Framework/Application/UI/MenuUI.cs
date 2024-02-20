@@ -50,6 +50,10 @@ namespace ChessChallenge.Application
             {
                 controller.StartNewBotMatch(ChallengeController.PlayerType.TRACER, ChallengeController.PlayerType.TRACER_V5);
             }
+            if (NextButtonInRow("TRACER vs V6", ref buttonPos1, spacing, buttonSize))
+            {
+                controller.StartNewBotMatch(ChallengeController.PlayerType.TRACER, ChallengeController.PlayerType.TRACER_V6);
+            }
 
             // Page buttons
             buttonPos.Y += breakSpacing;

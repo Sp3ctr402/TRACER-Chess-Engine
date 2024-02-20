@@ -11,12 +11,13 @@
 //  -Evaluation revamp
 //  -MoveOrdering revamp
 
-//TRACER_V6                                                                 + 80 +/- 12 Elo
+//TRACER_V6                                                                 +180 +/- 70 Elo
 // -minor Eval revamp for speed(+)
 // -Search Extensions(+)
 //  .check
 
-//TRACER_V7 - Final version                                                 + 50 +/- 23 Elo
+//TRACER_V7                                                                 +XXX +/- XX Elo
 // -LateMoveReduction(+)
+// -KillerMoveHeuristic(+)
 
 
