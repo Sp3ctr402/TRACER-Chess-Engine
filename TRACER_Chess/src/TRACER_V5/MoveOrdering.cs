@@ -1,7 +1,7 @@
 ﻿using ChessChallenge.API;
 using System;
 
-namespace Chess_Challenge.src.TRACER
+namespace Chess_Challenge.src.TRACER_V5
 {
     internal class MoveOrdering
     {
@@ -22,7 +22,6 @@ namespace Chess_Challenge.src.TRACER
         private const int KILLER = 10_000;  //Detect KillerMoves TODO
         private const int EQUALCAPTURES = 5_000;
         private const int LOOSINGCAPTURES = 1_000;
-        private const int MOVEFLAGS = 100;
 
         //Order Moves based on evaluation
         public void OrderMoves(Move[] moves, Board board, Move thisMoveFirst)
@@ -104,10 +103,6 @@ namespace Chess_Challenge.src.TRACER
 
                 moveScore += promotionPieceValue + PROMOTIONS;
             }
-
-            // Look at Move Flags (castles)
-            if (move.IsCastles)
-                moveScore += MOVEFLAGS;
 
 
             return moveScore;

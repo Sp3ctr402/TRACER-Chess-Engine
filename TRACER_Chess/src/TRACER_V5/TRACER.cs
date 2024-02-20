@@ -1,10 +1,9 @@
-#define SHOW_INFO
-using Chess_Challenge.src.TRACER;
+using Chess_Challenge.src.TRACER_V5;
 using ChessChallenge.API;
 using System;
 using System.Diagnostics;
 
-public class TRACER : IChessBot
+public class TRACER_V5 : IChessBot
 {
 #if SHOW_INFO
     public BotInfo Info()
@@ -14,7 +13,8 @@ public class TRACER : IChessBot
                             lastMove,
                             nodesSearched,
                             nodesPruned,
-                            ttable.CalculateFillPercentage()
+                            ttable.CalculateFillPercentage(),
+                            nogoodmoves
                             );
     }
 #endif
@@ -28,7 +28,6 @@ public class TRACER : IChessBot
     //Size of TTable in MB
     private const int TTABLE_SIZE_MB = 64;
 
-
     //Global Variables
     //best Move that will be played
     private Move bestMove;
@@ -41,13 +40,13 @@ public class TRACER : IChessBot
 
 
 
-
     //------------------------- #DEBUG -------------------------
     private string lastMove;
     private int lastDepth;
     private int currEval;
     private int nodesSearched;
     private int nodesPruned;
+    private int nogoodmoves;
     //------------------------- #DEBUGEND ----------------------
 
 
@@ -81,7 +80,6 @@ public class TRACER : IChessBot
             //Check if time for turn is up
             if (timer.MillisecondsElapsedThisTurn > timeForTurn)
             {
-                Console.WriteLine("times up");
                 break;
             }
 
@@ -95,6 +93,7 @@ public class TRACER : IChessBot
         // we hopefully dont get here
         if (bestMove.IsNull)
         {
+            nogoodmoves++;
             Move[] moves = board.GetLegalMoves();
             return moves[0];
         }
@@ -120,15 +119,10 @@ public class TRACER : IChessBot
             if (board.IsDraw())
                 return 0;
 
-            // Skip this position if a mating sequence has already been found earlier in the search, which would be shorter
-            // than any mate we could find from here. This is done by observing that alpha can't possibly be worse
-            // (and likewise beta can't  possibly be better) than being mated in the current position.
-            alpha = Math.Max(alpha, -MATE + ply);
-            beta = Math.Min(beta, MATE - ply);
-            if (alpha >= beta)
-            {
-                return alpha;
-            }
+            // if a move is Checkmate return best possible value
+            // encourage earlier checkmates by adding ply
+            if (board.IsInCheckmate())
+                return -MATE + ply;
         }
 
 
@@ -140,8 +134,8 @@ public class TRACER : IChessBot
         {
             if (ply == 0)
             {
-                nodesPruned++;
                 bestMove = ttable.TryGetStoredMove(key);
+                score = ttable.entries[ttable.Index(key)].value;
             }
             return ttVal;
         }
@@ -152,16 +146,6 @@ public class TRACER : IChessBot
             score = QSearch(board, alpha, beta);
             return score;
         }
-
-
-        // If there are any essential positions reached (checks etc)
-        // extend the search to accurately judge these positions
-        int extension = 0;
-        if (board.IsInCheck())
-        {
-            extension += 1;
-        }
-
 
         // Recursive call of Search function to find the best Move
         Move[] moves = board.GetLegalMoves();
@@ -175,11 +159,11 @@ public class TRACER : IChessBot
         //evaluation bound stored in ttable
         int evaluationBound = TranspositionTable.UPPERBOUND;
 
-        for (int i = 0; i <= moves.Length; i++)
+        foreach (Move move in moves)
         {
-            board.MakeMove(moves[i]);
-            score = -Search(board, depth - 1 + extension, -beta, -alpha, ply + 1);
-            board.UndoMove(moves[i]);
+            board.MakeMove(move);
+            score = -Search(board, depth - 1, -beta, -alpha, ply + 1);
+            board.UndoMove(move);
 
             // Move was *too* good, opponent will choose a different move earlier on to avoid this position.
             // Alpha-Beta Pruning
@@ -190,7 +174,7 @@ public class TRACER : IChessBot
                 //------------------------- #DEBUGEND ----------------------
 
                 //Store evaluation in transposition Table
-                ttable.StoreEvaluation(key, depth, ply, beta, TranspositionTable.LOWERBOUND, moves[i]);
+                ttable.StoreEvaluation(key, depth, ply, beta, TranspositionTable.LOWERBOUND, move);
 
                 return beta;
             }
@@ -204,7 +188,7 @@ public class TRACER : IChessBot
                 alpha = score;
                 if (ply == 0)
                 {
-                    bestMove = moves[i];
+                    bestMove = move;
                     currEval = score;
                 }
             }

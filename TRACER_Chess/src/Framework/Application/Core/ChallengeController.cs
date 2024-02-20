@@ -23,7 +23,8 @@ namespace ChessChallenge.Application
             TRACER_V1,
             TRACER_V2,
             TRACER_V3,
-            TRACER_V4
+            TRACER_V4,
+            TRACER_V5,
         }
 
         // Game state
@@ -229,6 +230,7 @@ namespace ChessChallenge.Application
                 PlayerType.TRACER_V2 => new ChessPlayer(new TRACER_V2(), type, GameDurationMilliseconds),
                 PlayerType.TRACER_V3 => new ChessPlayer(new TRACER_V3(), type, GameDurationMilliseconds),
                 PlayerType.TRACER_V4 => new ChessPlayer(new TRACER_V4(), type, GameDurationMilliseconds),
+                PlayerType.TRACER_V5 => new ChessPlayer(new TRACER_V4(), type, GameDurationMilliseconds),
                 _ => new ChessPlayer(new HumanPlayer(boardUI), type)
             };
         }

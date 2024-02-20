@@ -6,7 +6,7 @@ using System.Linq;
 using System.Net.NetworkInformation;
 using System.Text;
 
-namespace Chess_Challenge.src.TRACER
+namespace Chess_Challenge.src.TRACER_V5
 {
     internal class Evaluation
     {
@@ -430,18 +430,14 @@ namespace Chess_Challenge.src.TRACER
 
 
         // Evaluate Rooks
-        // -PeSTO's SquareTable (because it faster than always checking open files etc.)
+        // -increasing value as pawns disappear
+        // -bonus for standing on open/semi-open files
+        // -bonus for standing on seventh rank (danger rank)
+        // -bonus for connecting rooks
         private int RookEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame, int noP,
                                    ulong aPawnsBB, ulong ePawnsBB)
         {
             double rookScore = 0;
-            int[] mgTable = piece.IsWhite ? mgRookTableW : mgRookTableB;
-            int[] egTable = piece.IsWhite ? egRookTableW : egRookTableB;
-
-
-            // get the square Bonus
-            rookScore += mgTable[squareIndex] * midGame + egTable[squareIndex] * endGame;
-
 
             // get the current score of a rook
             rookScore += pieceValues[(int)piece.PieceType];
@@ -464,18 +460,13 @@ namespace Chess_Challenge.src.TRACER
 
 
         // Evaluate Kings
-        // -PeSTO's SquareTable (because it faster than always checking open files etc.)
+        // -King Safety MidGame
+        // -King centralization EndGame
+        // -Getting pinned punishment
         private int KingEvaluation(Board board, int squareIndex, Piece piece, int[] pieceValues, double midGame, double endGame, 
                                    ulong aPawnsBB)
         {
             double kingScore = 0;
-            int[] mgTable = piece.IsWhite ? mgKingTableW : mgKingTableB;
-            int[] egTable = piece.IsWhite ? egKingTableW : egKingTableB;
-
-
-            // get the square Bonus
-            kingScore += mgTable[squareIndex] * midGame + egTable[squareIndex] * endGame;
-
 
             // get the current score of a king
             kingScore += pieceValues[(int)piece.PieceType];
@@ -558,59 +549,6 @@ namespace Chess_Challenge.src.TRACER
 
             return isProtected;
         }
-
-        // PieceSquare Tables for rooks
-        private static readonly int[] mgRookTableW =
-{
-             -19, -13,   1,  17, 16,  7, -37, -26,
-             -44, -16, -20,  -9, -1, 11,  -6, -71,
-             -45, -25, -16, -17,  3,  0,  -5, -33,
-             -36, -26, -12,  -1,  9, -7,   6, -23,
-             -24, -11,   7,  26, 24, 35,  -8, -20,
-              -5,  19,  26,  36, 17, 45,  61,  16,
-              27,  32,  58,  62, 80, 67,  26,  44,
-              32,  42,  32,  51, 63,  9,  31,  43
-        };
-        private static readonly int[] mgRookTableB = mgRookTableW.Reverse().ToArray();
-        private static readonly int[] egRookTableW =
-{
-             -9,  2,  3, -1, -5, -13,   4, -20,
-             -6, -6,  0,  2, -9,  -9, -11,  -3,
-             -4,  0, -5, -1, -7, -12,  -8, -16,
-              3,  5,  8,  4, -5,  -6,  -8, -11,
-              4,  3, 13,  1,  2,   1,  -1,   2,
-              7,  7,  7,  5,  4,  -3,  -5,  -3,
-             11, 13, 13, 11, -3,   3,   8,   3,
-             13, 10, 18, 15, 12,  12,   8,   5
-        };
-        private static readonly int[] egRookTableB = egRookTableW.Reverse().ToArray();
-
-        // PieceSquare Tables for kings
-        private static readonly int[] mgKingTableW =
-        {
-            -15,  36,  12, -54,   8, -28,  24,  14,
-              1,   7,  -8, -64, -43, -16,   9,   8,
-            -14, -14, -22, -46, -44, -30, -15, -27,
-            -49,  -1, -27, -39, -46, -44, -33, -51,
-            -17, -20, -12, -27, -30, -25, -14, -36,
-             -9,  24,   2, -16, -20,   6,  22, -22,
-             29,  -1, -20,  -7,  -8,  -4, -38, -29,
-            -65,  23,  16, -15, -56, -34,   2,  13,
-        };
-        private static readonly int[] mgKingTableB = mgKingTableW.Reverse().ToArray();
-        private static readonly int[] egKingTableW =
-{
-             -74, -35, -18, -18, -11,  15,   4, -17,
-             -12,  17,  14,  17,  17,  38,  23,  11,
-              10,  17,  23,  15,  20,  45,  44,  13,
-              -8,  22,  24,  27,  26,  33,  26,   3,
-             -18,  -4,  21,  24,  27,  23,   9, -11,
-             -19,  -3,  11,  21,  23,  16,   7,  -9,
-             -27, -11,   4,  13,  14,   4,  -5, -17,
-             -53, -34, -21, -11, -28, -14, -24, -43
-        };
-        private static readonly int[] egKingTableB = egKingTableW.Reverse().ToArray();
-
         #endregion
 
     }
